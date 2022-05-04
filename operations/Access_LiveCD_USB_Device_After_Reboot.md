@@ -2,7 +2,7 @@
 
 This is a procedure that only applies to the LiveCD USB device after the PIT node has been rebooted.
 
-> **`USB ONLY`** If the installation above was done from a [Remote ISO](../install/bootstrap_livecd_remote_iso.md).
+> **`USB ONLY`** If the installation above was done from a [Remote ISO](../install/pre-installation.md).
 
 After deploying the LiveCD's NCN, the LiveCD USB itself is unharmed and available to an administrator.
 

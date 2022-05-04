@@ -29,7 +29,7 @@ For more information about modifying `customizations.yaml` and tuning for specif
 - [Stage 3 - CSM Services Upgrade](Stage_3.md)
 - [Stage 4 - Ceph Upgrade](Stage_4.md)
 - [Stage 5 - Perform NCN Personalization](Stage_5.md)
-- [Return to Main Page and Proceed to *Validate CSM Health*](../index.md#validate_csm_health)
+- [Return to Main Page and Proceed to *Validate CSM Health*](../index.md#6-validate-csm-health)
 
 **`Important:`** Take note of the below content for troubleshooting purposes, in the event that issues are encountered during the upgrade process.
 

@@ -30,7 +30,7 @@ scripts, revision control with git, configuration management with Ansible, YAML,
    of the HPE Cray EX system, differences between previous release and this release, and conventions
    used in this documentation.
 
-1. [Pre-Install Steps](operations/preinstall/Preinstall.md)
+1. [Bare-Metal Steps](operations/bare-metal/Bare-Metal.md)
 
    This chapter outlines how to set up default credentials for River BMCs and
    ServerTech PDUs, which must be done before the initial installation of

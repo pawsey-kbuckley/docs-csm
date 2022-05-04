@@ -1,4 +1,4 @@
-# Wipe NCN Disks for Reinstallation
+# Manual Wipe Procedures
 
 This page details how to wipe NCN disks.
 

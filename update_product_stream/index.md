@@ -6,13 +6,12 @@ hotfixes after the release.
 The CSM documentation is included within the CSM product release tarball inside the `docs-csm` RPM.
 After the RPM has been installed, the documentation will be available at `/usr/share/doc/csm`.
 
-- [Download and Extract CSM Product Release](#download-and-extract)
-- [Apply Patch to CSM Release](#patch)
-- [Check for Latest Documentation](#documentation)
-- [Check for Field Notices about Hotfixes](#hotfixes)
+- [Download and Extract CSM Product Release](#download-and-extract-csm-product-release)
+- [Apply Patch to CSM Release](#apply-patch-to-csm-release)
+- [Check for Latest Documentation](#check-for-latest-documentation)
+- [Check for Field Notices about Hotfixes](#check-for-field-notices-about-hotfixes)
 
-<a name="download-and-extract"></a>
-
+<a name="download-and-extract-csm-product-release"></a>
 ## Download and Extract CSM Product Release
 
 Acquire a CSM software release tarball for installation on the HPE Cray EX supercomputer.
@@ -35,8 +34,7 @@ Acquire a CSM software release tarball for installation on the HPE Cray EX super
 
 1. Before using this software release, check for any patches available for it. If patches are available, see [Apply Patch to CSM Release](#patch).
 
-<a name="patch"></a>
-
+<a name="apply-patch-to-csm-release"></a>
 ## Apply Patch to CSM Release
 
 Apply a CSM update patch to the release tarball. This ensures that the latest CSM product artifacts are installed on the HPE Cray EX supercomputer.
@@ -103,8 +101,7 @@ Apply a CSM update patch to the release tarball. This ensures that the latest CS
 
 This tarball can now be used in place of the original CSM software release tarball.
 
-<a name="documentation"></a>
-
+<a name="check-for-latest-documentation"></a>
 ## Check for Latest Documentation
 
 Acquire the latest documentation RPM. This may include updates, corrections, and enhancements that were not available until after the software release.
@@ -132,7 +129,8 @@ Acquire the latest documentation RPM. This may include updates, corrections, and
 
 1. Repeat the first step in this procedure to display the version of the CSM documentation after the update.
 
-<a name="hotfixes"></a>
+<a name="check-for-field-notices-about-hotfixes"></a>
+## Check for Field Notices about Hotfixes
 
 ## Check for Field Notices about Hotfixes
 

@@ -1,4 +1,4 @@
-# Pre-Install Steps
+# Bare-Metal Steps
 
 This section provides information on what needs to be done before
 an initial install of CSM.

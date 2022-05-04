@@ -42,7 +42,7 @@ If rebuilding `ncn-s001`, it is critical that the `storage-ceph-cloudinit.sh` ha
 
    If it is there then it will need to be fixed by running:
 
-   **IMPORTANT:** The below python script is provided by the `docs-csm` RPM. To install the latest version of it, see [Check for Latest Documentation](../../../update_product_stream/index.md#documentation).
+   **IMPORTANT:** The below python script is provided by the `docs-csm` RPM. To install the latest version of it, see [Check for Latest Documentation](../../../update_product_stream/index.md#check-for-latest-documentation).
 
    ```bash
    ncn# python3 /usr/share/doc/csm/scripts/patch-ceph-runcmd.py

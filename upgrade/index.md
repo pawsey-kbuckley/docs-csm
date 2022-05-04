@@ -8,7 +8,7 @@ product streams for the HPE Cray EX system can be installed or upgraded.
 
 1. [Prepare for Upgrade](#prepare_for_upgrade)
 1. [Upgrade Management Nodes and CSM Services](#upgrade_management_nodes_csm_services)
-1. [Validate CSM Health](#validate_csm_health)
+1. [Validate CSM Health](#6-validate-csm-health)
 1. [Next Topic](#next_topic)
 
 Note: If problems are encountered during the upgrade, some of the topics do have their own troubleshooting

@@ -10,8 +10,7 @@ The [SHCD/HMN Connections Rules](shcd_hmn_connections_rules.md) document explain
 * SHCD Excel file for the system
 * Podman is available
 
-    > Podman is available on the CSM LiveCD, and is installed onto an NCN when being used as an environment to create the CSM PIT in the [Bootstrap PIT Node from LiveCD USB](bootstrap_livecd_usb.md) or
-    > [Bootstrap Pit Node from LiveCD Remote ISO](bootstrap_livecd_remote_iso.md) procedures.
+    > Podman is available on the CSM LiveCD, and is installed onto an NCN when being used as an environment to create the CSM PIT in the [Bootstrap LiveCD](pre-installation.md) procedure.
 
 ## Procedure
 
@@ -26,7 +25,9 @@ The [SHCD/HMN Connections Rules](shcd_hmn_connections_rules.md) document explain
 
 1. Load the `hms-shcd-parser` container image from the CSM release distribution into Podman.
 
-    > The `CSM_PATH` environment variable is expected to to be set from the [Bootstrap PIT Node from LiveCD USB](bootstrap_livecd_usb.md) or [Bootstrap PIT Node from LiveCD Remote ISO](bootstrap_livecd_remote_iso.md) procedures.
+    > - The `CSM_PATH` environment variable is expected to be set from the [Bootstrap PIT Node from LiveCD Remote ISO](pre-installation.md) procedures.
+    > - The `CSM_RELEASE` environment variable is expected to to be set from the [Bootstrap LiveCD](pre-installation.md) procedure.
+    > It is expected that the current directory contains the directory of the extracted CSM release tarball.
 
     Determine the version of the `hms-shcd-parser` container image:
 

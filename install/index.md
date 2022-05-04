@@ -18,225 +18,207 @@ Once the CSM installation has completed, other product streams for the HPE Cray 
 
 ## Topics
 
-1. [Validate SHCD](../operations/network/management_network/validate_shcd.md)
-1. [Prepare Configuration Payload](#prepare_configuration_payload)
-1. [Prepare Management Nodes](#prepare_management_nodes)
-1. [Bootstrap PIT Node](#bootstrap_pit_node)
-1. [Configure Management Network Switches](#configure_management_network)
-1. [Collect MAC Addresses for NCNs](#collect_mac_addresses_for_ncns)
-1. [Deploy Management Nodes](#deploy_management_nodes)
-1. [Install CSM Services](#install_csm_services)
-1. [Validate CSM Health Before Final NCN Deployment](#validate_csm_health_before_final_ncn_deploy)
-1. [Deploy Final NCN](#deploy_final_ncn)
-1. [Configure Administrative Access](#configure_administrative_access)
-1. [Validate CSM Health](#validate_csm_health)
-1. [Configure Prometheus Alert Notifications](#configure_prometheus_alert_notifications)
-1. [Update Firmware with FAS](#update_firmware_with_fas)
-1. [Prepare Compute Nodes](#prepare_compute_nodes)
-1. [Next Topic](#next_topic)
-1. [Troubleshooting Installation Problems](#troubleshooting_installation)
+1. [Preparing for a Re-installation](#preparing-for-a-re-installation)
+1. [Pre-Installation](#pre-installation)
+   1. [Boot Installation Environment](#1-boot-installation-environment)
+   1. [Import CSM Tarball](#2-import-csm-tarball)
+   1. [Create System Configuration](#3-create-system-configuration)
+   1. [Configure Management Network Switches](#4-configure-management-network-switches)
+   1. [Identify Inventory](#5-identify-inventory)
+1. [Installation](#installation)
+    1. [Deploy Management Nodes](#1-deploy-management-nodes)
+    1. [Install CSM Services](#2-install-csm-services)
+    1. [Validate CSM Health Before Final NCN Deployment](#3-validate-csm-health-before-final-ncn-deployment)
+    1. [Deploy Final NCN](#4-deploy-final-ncn)
+    1. [Configure Administrative Access](#5-configure-administrative-access)
+    1. [Validate CSM Health](#6-validate-csm-health)
+    1. [Configure Prometheus Alert Notifications](#7-configure-prometheus-alert-notifications)
+    1. [Update Firmware with FAS](#8-update-firmware-with-fas)
+    1. [Prepare Compute Nodes](#9-prepare-compute-nodes)
+1. [Next Topic](#next-topic)
+1. [Troubleshooting Installation Problems](#troubleshooting-installation-problems)
 
 The topics in this chapter need to be done as part of an ordered procedure so are shown here with numbered topics.
 
-**`Note`**: If problems are encountered during the installation, some topics have their own [troubleshooting sections found in the operations index](../operations/index.md).
+**`Note`**: If problems are encountered during the installation, some topics have their own [troubleshooting sections found in the operations index](../operations/index.md)
 sections, but there is also a general troubleshooting topic.
 
-## Details
+<a name="preparing-for-a-re-installation"></a>
+# Preparing for a Re-installation
 
-   <a name="validate_management_network_cabling"></a>
+If one is reinstalling a system, the existing cluster needs to be wiped and powered down.
 
-   1. Validate SHCD
+**`TODO: Redo the organization and details of prepare management nodes`**
+See [Prepare Management Nodes](prepare_management_nodes.md), and then come back and proceed to the [Pre-Installation](#pre-installation).
 
-      The cabling should be validated between the nodes and the management network switches. The information in the
-      Shasta Cabling Diagram (SHCD) can be used to confirm the cables which physically connect components of the system.
-      Having the data in the SHCD which matches the physical cabling will be needed later in both
-      [Prepare Configuration Payload](#prepare_configuration_payload) and [Configure Management Network](configure_management_network.md).
+<a name="pre-installation"></a>
+# Pre-Installation
 
-      See [Validate SHCD](../operations/network/management_network/validate_shcd.md)
+These steps walk the user through properly setting up a CRAY supercomputer for an installation.
 
-      **Note**: If a reinstall or fresh install of this software release is being done on this system and the management
-      network cabling has already been validated, then this topic could be skipped and instead move to
-      [Prepare Configuration Payload](#prepare_configuration_payload)
-   <a name="prepare_configuration_payload"></a>
+See [pre-installation](./pre-installation.md).
 
-   1. Prepare Configuration Payload
+<a name="1-prepare-installation-environment-server"></a>
+## 1. Boot Installation Environment
 
-      Information gathered from a site survey is needed to feed into the CSM installation process, such as system name,
-      system size, site network information for the CAN, site DNS configuration, site NTP configuration, network
-      information for the node used to bootstrap the installation. Much of the information about the system hardware
-      is encapsulated in the SHCD (Shasta Cabling Diagram), which is a spreadsheet prepared by HPE Cray Manufacturing
-      to assemble the components of the system and connect appropriately labeled cables.
+See [prepare installation environment](./pre-installation.md#1-boot-installation-environment).
 
-      See [Prepare Configuration Payload](prepare_configuration_payload.md)
-   <a name="prepare_management_nodes"></a>
+<a name="2-import-csm-tarball"></a>
+## 2. Import CSM Tarball
 
-   1. Prepare Management Nodes
+See [import CSM tarball](./pre-installation.md#2-import-csm-tarball).
 
-      Some preparation of the management nodes might be needed before starting an install or reinstall.
-      The preparation includes checking and updating the firmware on the PIT node, quiescing the compute nodes
-      and application nodes, scaling back DHCP on the management nodes, wiping the storage on the management nodes,
-      powering off the management nodes, and possibly powering off the PIT node.
+<a name="3-create-system-configuration"></a>
+## 3. Create System Configuration
 
-      See [Prepare Management Nodes](prepare_management_nodes.md)
-   <a name="bootstrap_pit_node"></a>
+See [create system configuration](./pre-installation.md#3-create-system-configuration).
 
-   1. Bootstrap PIT Node
-   The Pre-Install Toolkit (PIT) node needs to be bootstrapped from the LiveCD. There are two media available
-   to bootstrap the PIT node--the RemoteISO or a bootable USB device. The recommended media is the RemoteISO
-   because it does not require any physical media to prepare. However, remotely mounting an ISO on a BMC does not
-   work smoothly for nodes from all vendors. It is recommended to try the RemoteISO first.
+<a name="4-configure-management-network-switches"></a>
+## 4. Configure Management Network Switches
 
-      Use one of these procedures to bootstrap the PIT node from the LiveCD.
-      * [Bootstrap PIT Node from LiveCD Remote ISO](bootstrap_livecd_remote_iso.md) (recommended)
-         * **Gigabyte BMCs** should not use the RemoteISO method.
-         * **Intel BMCs** should not use the RemoteISO method.
-      * [Bootstrap PIT Node from LiveCD USB](bootstrap_livecd_usb.md) (fallback)
+At this point external connectivity has been established, and either bare-metal configs can be installed or new configs can be applied.
 
-      Using the LiveCD USB method requires a USB 3.0 device with at least 1TB of space to create a bootable LiveCD.
-   <a name="configure_management_network"></a>
+See [Management Network User Guide](../operations/network/management_network/index.md).
 
-   1. Configure Management Network Switches
+<a name="5-identify-inventory"></a>
+## 5. Identify Inventory
 
-      Now that the PIT node has been booted with the LiveCD environment and CSI has generated the switch IP addresses,
-      the management network switches can be configured.
+At this point inventory can be identified. This is important for validating the SHCD. Specifically 
+BMCs will be located, interrogated, and their node types identified.
 
-      See [Management Network User Guide](../operations/network/management_network/index.md)
+**`TODO: Add page for identification.`**
+See []().
 
+<a name="find-expected-bmcs"></a>
+### Find Expected BMCs
 
-      **Note**: If a reinstall of this software release is being done on this system and the management network switches
-      have already been configured, then this topic could be skipped and instead move to
-      [Collect MAC Addresses for NCNs](#collect_mac_addresses_for_ncns)
-   <a name="collect_mac_addresses_for_ncns"></a>
+**`TODO: Add page for detailing identification.`** 
+See []().
 
-   1. Collect MAC Addresses for NCNs
-   Now that the PIT node has been booted with the LiveCD and the management network switches have been configured,
-   the actual MAC addresses for the management nodes can be collected. This process will include repetition of some
-   of the steps done up to this point because `csi config init` will need to be run with the proper
-   MAC addresses.
+<a name="boot-identified-inventory"></a>
+### Boot Identified BMCs
 
-      See [Collect MAC Addresses for NCNs](collect_mac_addresses_for_ncns.md)
+**`TODO: Add page for detailing boot directions with the ephemeral discovery ROM.`** 
+See []().
 
-      **Note**: If a reinstall of this software release is being done on this system and the `ncn_metadata.csv`
-      file already had valid MAC addresses for both BMC and node interfaces before `csi config init` was run, then
-      this topic could be skipped and instead move to [Deploy Management Nodes](#deploy_management_nodes).
+<a name="installation"></a>
+# Installation
 
-      **Note**: If a first time install of this software release is being done on this system and the `ncn_metadata.csv`
-      file already had valid MAC addresses for both BMC and node interfaces before `csi config init` was run, then
-      this topic could be skipped and instead move to [Deploy Management Nodes](#deploy_management_nodes).
-   <a name="deploy_management_nodes"></a>
+<a name="1-deploy-management-nodes"></a>
+## 1. Deploy Management Nodes
 
-   1. Deploy Management Nodes
-   Now that the PIT node has been booted with the LiveCD and the management network switches have been configured,
-   the other management nodes can be deployed. This procedure will boot all of the management nodes, initialize
-   Ceph storage on the storage nodes, and start the Kubernetes cluster on all of the worker nodes and the master nodes,
-   except for the PIT node. The PIT node will join Kubernetes after it is rebooted later in
-   [Deploy Final NCN](#deploy_final_ncn).
+The first nodes to deploy are the NCNs. These will host CSM services that are required for deploying the rest of the supercomputer.
 
-      See [Deploy Management Nodes](deploy_management_nodes.md)
-   <a name="install_csm_services"></a>
+See [Deploy Management Nodes](deploy_management_nodes.md).
 
-   1. Install CSM Services
-   Now that deployment of management nodes is complete with initialized Ceph storage and a running Kubernetes
-   cluster on all worker and master nodes, except the PIT node, the CSM services can be installed. The Nexus
-   repository will be populated with artifacts; containerized CSM services will be installed; and a few other configuration steps taken.
+> **`NOTE`** The PIT node will join Kubernetes after it is rebooted later in
+[Deploy Final NCN](#4-deploy-final-ncn).
 
-      See [Install CSM Services](install_csm_services.md)
-   <a name="validate_csm_health_before_final_ncn_deploy"></a>
+<a name="7-install_csm_services"></a>
+## 2. Install CSM Services
 
-   1. Validate CSM Health Before Final NCN Deployment
+Now that deployment of management nodes is complete with initialized Ceph storage and a running Kubernetes
+cluster on all worker and master nodes, except the PIT node, the CSM services can be installed. The Nexus
+repository will be populated with artifacts; containerized CSM services will be installed; and a few other configuration steps taken.
 
-      After installing all of the CSM services, now validate the health of the management nodes and all CSM services.
-      The reason to do it now is that if there are any problems detected with the core infrastructure or the nodes, it is
-      easy to rewind the installation to [Deploy Management Nodes](#deploy_management_nodes) because the PIT node has not
-      yet been redeployed. In addition, redeploying the PIT node successfully requires several CSM services to be working
-      properly, so validating this is important.
+See [Install CSM Services](install_csm_services.md).
 
-      To run the CSM health checks, see [Validate CSM Health](../operations/validate_csm_health.md)
-   <a name="deploy_final_ncn"></a>
+<a name="3-validate-csm-health-before-final-ncn-deployment"></a>
+## 3. Validate CSM Health Before Final NCN Deployment
 
-   1. Deploy Final NCN
+After installing all of the CSM services, now validate the health of the management nodes and all CSM services.
+The reason to do it now is that if there are any problems detected with the core infrastructure or the nodes, it is
+easy to rewind the installation to [Deploy Management Nodes](#1-deploy-management-nodes) because the PIT node has not
+yet been redeployed. In addition, redeploying the PIT node successfully requires several CSM services to be working
+properly, so validating this is important.
 
-      Now that all CSM services have been installed and the CSM health checks completed, with the possible exception
-      of Booting the CSM Barebones Image and the UAS/UAI tests, the PIT node can be rebooted to leave the LiveCD
-      environment and assume its intended role as one the Kubernetes master nodes.
+See [Validate CSM Health](../operations/validate_csm_health.md).
 
-      See [Deploy Final NCN](deploy_final_ncn.md)
-   <a name="configure_administrative_access"></a>
+<a name="4-deploy-final-ncn"></a>
+## 4. Deploy Final NCN
 
-   1. Configure Administrative Access
+Now that all CSM services have been installed and the CSM health checks completed, with the possible exception
+of Booting the CSM Barebones Image and the UAS/UAI tests, the PIT node can be rebooted to leave the LiveCD
+environment and assume its intended role as one the Kubernetes master nodes.
 
-      Now that all of the CSM services have been installed and the PIT node has been redeployed, administrative access
-      can be prepared. This may include configuring Keycloak with a local Keycloak account or confirming Keycloak
-      is properly federating LDAP or other Identity Provider (IdP), initializing the 'cray' CLI for administrative
-      commands, locking the management nodes from accidental actions such as firmware updates by FAS or power actions by
-      CAPMC, configuring the CSM layer of configuration by CFS in NCN personalization,and configuring the node BMCs (node
-      controllers) for nodes in liquid cooled cabinets.
+See [Deploy Final NCN](deploy_final_ncn.md).
 
-      See [Configure Administrative Access](configure_administrative_access.md)
-   <a name="validate_csm_health"></a>
+<a name="5-configure-administrative-access"></a>
+## 5. Configure Administrative Access
 
-   1. Validate CSM Health
+Now that all of the CSM services have been installed and the PIT node has been redeployed, administrative access
+can be prepared. This may include configuring Keycloak with a local Keycloak account or confirming Keycloak
+is properly federating LDAP or other Identity Provider (IdP), initializing the 'cray' CLI for administrative
+commands, locking the management nodes from accidental actions such as firmware updates by FAS or power actions by
+CAPMC, configuring the CSM layer of configuration by CFS in NCN personalization,and configuring the node BMCs (node
+controllers) for nodes in liquid cooled cabinets.
 
-      Now that all management nodes have joined the Kubernetes cluster, CSM services have been installed,
-      and administrative access has been enabled, the health of the management nodes and all CSM services
-      should be validated. There are no exceptions to running the tests--all can be run now.
+See [Configure Administrative Access](configure_administrative_access.md).
 
-      This CSM health validation can also be run at other points during the system lifecycle, such as when replacing
-      a management node, checking the health after a management node has rebooted because of a crash, as part of doing
-      a full system power down or power up, or after other types of system maintenance.
+<a name="6-validate-csm-health"></a>
+## 6. Validate CSM Health
 
-      See [Validate CSM Health](../operations/validate_csm_health.md)
-   <a name="configure_prometheus_alert_notifications"></a>
+Now that all management nodes have joined the Kubernetes cluster, CSM services have been installed,
+and administrative access has been enabled, the health of the management nodes and all CSM services
+should be validated. There are no exceptions to running the tests--all can be run now.
 
-   1. Configure Prometheus Alert Notifications
+This CSM health validation can also be run at other points during the system lifecycle, such as when replacing
+a management node, checking the health after a management node has rebooted because of a crash, as part of doing
+a full system power down or power up, or after other types of system maintenance.
 
-      Now that CSM has been installed and health has been validated, if the system management health monitoring tools and specifically,
-      Prometheus, are found to be useful, email notifications can be configured for specific alerts defined in Prometheus.
-      Prometheus upstream documentation can be leveraged for an [Alert Notification Template Reference](https://prometheus.io/docs/alerting/latest/notifications/)
-      as well as [Notification Template Examples](https://prometheus.io/docs/alerting/latest/notification_examples/). Currently supported notification
-      types include Slack, Pager Duty, email, or a custom integration via a generic webhook interface.
+See [Validate CSM Health](../operations/validate_csm_health.md).
 
-      See [Configure Prometheus Email Alert Notifications](../operations/system_management_health/Configure_Prometheus_Email_Alert_Notifications.md) for example
-      configuration of an email alert notification for Postgres replication alerts that are defined on the system.
-   <a name="update_firmware_with_fas"></a>
+<a name="7-configure-prometheus-alert-notifications"></a>
+## 7. Configure Prometheus Alert Notifications
 
-   1. Update Firmware with FAS
+Now that CSM has been installed and health has been validated, if the system management health monitoring tools and specifically,
+Prometheus, are found to be useful, email notifications can be configured for specific alerts defined in Prometheus.
+Prometheus upstream documentation can be leveraged for an [Alert Notification Template Reference](https://prometheus.io/docs/alerting/latest/notifications/)
+as well as [Notification Template Examples](https://prometheus.io/docs/alerting/latest/notification_examples/). Currently supported notification
+types include Slack, Pager Duty, email, or a custom integration via a generic webhook interface.
 
-      Now that all management nodes and CSM services have been validated as healthy, the firmware on other
-      components in the system can be checked and updated. The Firmware Action Service (FAS) communicates
-      with many devices on the system. FAS can be used to update the firmware for all of the devices it
-      communicates with at once, or specific devices can be targeted for a firmware update.
+See [Configure Prometheus Email Alert Notifications](../operations/system_management_health/Configure_Prometheus_Email_Alert_Notifications.md) for example
+configuration of an email alert notification for Postgres replication alerts that are defined on the system.
 
-      >**IMPORTANT:**
-      Before FAS can be used to update firmware, refer to the 1.5 _HPE Cray EX System Software Getting Started Guide S-8000_
-      on the HPE Customer Support Center at https://www.hpe.com/support/ex-gsg for more information about how to install
-      the HPE Cray EX HPC Firmware Pack (HFP) product. The installation of HFP will inform FAS of the newest firmware
-      available. Once FAS is aware that new firmware is available, then see
-      [Update Firmware with FAS](../operations/firmware/Update_Firmware_with_FAS.md).
-   <a name="prepare_compute_nodes"></a>
+<a name="8-update-firmware-with-fas"></a>
+## 8. Update Firmware with FAS
 
-   1. Prepare Compute Nodes
+Now that all management nodes and CSM services have been validated as healthy, the firmware on other
+components in the system can be checked and updated. The Firmware Action Service (FAS) communicates
+with many devices on the system. FAS can be used to update the firmware for all of the devices it
+communicates with at once, or specific devices can be targeted for a firmware update.
 
-      After completion of the firmware update with FAS, compute nodes can be prepared. Some compute node
-      types have special preparation steps, but most compute nodes are ready to be used now.
+> **IMPORTANT:**
+>  Before FAS can be used to update firmware, refer to the 1.5 _HPE Cray EX System Software Getting Started Guide S-8000_
+>  on the HPE Customer Support Center at https://www.hpe.com/support/ex-gsg for more information about how to install
+>  the HPE Cray EX HPC Firmware Pack (HFP) product. The installation of HFP will inform FAS of the newest firmware
+>  available. Once FAS is aware that new firmware is available, then see
+>  [Update Firmware with FAS](../operations/firmware/Update_Firmware_with_FAS.md).
 
-      These compute node types require preparation.
-         * HPE Apollo 6500 XL645d Gen10 Plus
-         * Gigabyte
+<a name="9-prepare-compute-nodes"></a>
+## 9. Prepare Compute Nodes
 
-      See [Prepare Compute Nodes](prepare_compute_nodes.md)
-   <a name="next_topic"></a>
+After completion of the firmware update with FAS, compute nodes can be prepared. Some compute node
+types have special preparation steps, but most compute nodes are ready to be used now.
 
-   1. Next Topic
+These compute node types require preparation.
+   * HPE Apollo 6500 XL645d Gen10 Plus
+   * Gigabyte
 
-      After completion of the firmware update with FAS and the preparation of compute nodes, the CSM product stream has
-      been fully installed and configured. Refer to the _HPE Cray EX System Software Getting Started Guide S-8000_
-      on the HPE Customer Support Center at https://www.hpe.com/support/ex-gsg for more information on other product streams to be installed and configured after CSM.
-   <a name="troubleshooting_installation"></a>
+See [Prepare Compute Nodes](prepare_compute_nodes.md).
 
-   1. Troubleshooting Installation Problems
+<a name="next-topic"></a>
+# Next Topic
 
-      The installation of the Cray System Management (CSM) product requires knowledge of the various nodes and
-      switches for the HPE Cray EX system. The procedures in this section should be referenced during the CSM install
-      for additional information on system hardware, troubleshooting, and administrative tasks related to CSM.
-      See [Troubleshooting Installation Problems](troubleshooting_installation.md)
+After completion of the firmware update with FAS and the preparation of compute nodes, the CSM product stream has
+been fully installed and configured. Refer to the _HPE Cray EX System Software Getting Started Guide S-8000_
+on the HPE Customer Support Center at https://www.hpe.com/support/ex-gsg for more information on other product streams to be installed and configured after CSM.
+
+<a name="troubleshooting-installation"></a>
+# Troubleshooting Installation Problems
+
+The installation of the Cray System Management (CSM) product requires knowledge of the various nodes and
+switches for the HPE Cray EX system. The procedures in this section should be referenced during the CSM install
+for additional information on system hardware, troubleshooting, and administrative tasks related to CSM.
+
+See [Troubleshooting Installation Problems](troubleshooting_installation.md).

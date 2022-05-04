@@ -41,7 +41,7 @@ boot-check nodes to dump network device information without an operating system.
 2. BMC MAC addresses already collected
 3. LiveCD ConMan is configured for each BMC
 
-For help with either of those, see [LiveCD Setup](bootstrap_livecd_remote_iso.md).
+For help with either of those, see [LiveCD Setup](pre-installation.md).
 
 <a name="mac-collection"></a>
 #### MAC Collection
@@ -270,5 +270,5 @@ If the  `ncn_metadata.csv` file is incorrect, the NCNs will be unable to deploy.
 
 8. Wipe the disks before relaunching the NCNs.
 
-   See [full wipe from Wipe NCN Disks for Reinstallation](wipe_ncn_disks_for_reinstallation.md#full-wipe).
+   See [full wipe from Wipe NCN Disks for Reinstallation](../operations/wipe_ncn_disks_for_reinstallation.md#full-wipe).
 

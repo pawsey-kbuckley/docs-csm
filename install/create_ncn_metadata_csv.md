@@ -127,7 +127,7 @@ x3000c0s1b0n0,Management,Master,94:40:c9:37:87:32,14:02:ec:da:b9:98,14:02:ec:da:
    in the `ncn_metadata.csv` file is acceptable until the point during the install at which the management network
    switches have been configured and the PIT node can be used to collect the information. The correct MAC addresses
    are needed before attempting to boot the management nodes with their real image in
-   [Deploy Management Nodes](index.md#deploy_management_nodes)
+   [Deploy Management Nodes](index.md#1-deploy-management-nodes)
 
    * If the nodes are booted to Linux, then the data can be collected by `ipmitool lan print` for the BMC MAC,
    and the `ip address` command for the other NICs. This is rarely the case for a first time install.

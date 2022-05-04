@@ -9,7 +9,7 @@ take place. Watching the console or the console log for certain nodes can help t
 what happens and when. When the process completes for all nodes, the Ceph storage is
 initialized and the Kubernetes cluster is created and ready for a workload. The PIT node
 will join Kubernetes after it is rebooted later in
-[Deploy Final NCN](index.md#deploy_final_ncn).
+[Deploy Final NCN](index.md#4-deploy-final-ncn).
 
 <a name="timing-of-deployments"></a>
 
@@ -22,12 +22,12 @@ the number of storage and worker nodes.
 
 ## Topics
 
-   1. [Prepare for management node deployment](#prepare_for_management_node_deployment)
-      1. [Tokens and IPMI password](#tokens-and-ipmi-password)
-      1. [Ensure time is accurate before Deploying NCNs](#ensure-time-is-accurate-before-deploying-ncns)
-   1. [Update management node firmware](#update_management_node_firmware)
-   1. [Deploy management nodes](#deploy_management_nodes)
-      1. [Deploy workflow](#deploy-workflow)
+   1. [Prepare for Management Node Deployment](#prepare_for_management_node_deployment)
+      1. [Tokens and IPMI Password](#tokens-and-ipmi-password)
+      1. [Ensure Time Is Accurate Before Deploying NCNs](#ensure-time-is-accurate-before-deploying-ncns)
+   1. [Update Management Node Firmware](#update_management_node_firmware)
+   1. [Deploy Management Nodes](#1-deploy-management-nodes)
+      1. [Deploy Workflow](#deploy-workflow)
       1. [Deploy](#deploy)
       1. [Check LVM on Kubernetes NCNs](#check-lvm-on-masters-and-workers)
       1. [Check for unused drives on utility storage nodes](#check-for-unused-drives-on-utility-storage-nodes)
@@ -56,8 +56,8 @@ Preparation of the environment must be done before attempting to deploy the mana
       > `read -s` is used to prevent the password from being written to the screen or the shell history.
 
       ```bash
-      pit# read -s IPMI_PASSWORD
-      pit# export IPMI_PASSWORD
+      read -s IPMI_PASSWORD
+      export IPMI_PASSWORD
       ```
 
    1. Set the remaining helper variables.
@@ -65,7 +65,7 @@ Preparation of the environment must be done before attempting to deploy the mana
       > These values do not need to be altered from what is shown.
 
       ```bash
-      pit# mtoken='ncn-m(?!001)\w+-mgmt' ; stoken='ncn-s\w+-mgmt' ; wtoken='ncn-w\w+-mgmt' ; export USERNAME=root
+      mtoken='ncn-m(?!001)\w+-mgmt' ; stoken='ncn-s\w+-mgmt' ; wtoken='ncn-w\w+-mgmt' ; export USERNAME=root
       ```
 
    Throughout the guide, simple one-liners can be used to query status of expected nodes. If the shell or environment is terminated, these
@@ -76,128 +76,20 @@ Preparation of the environment must be done before attempting to deploy the mana
    * Check power status of all NCNs.
 
       ```bash
-      pit# grep -oP "($mtoken|$stoken|$wtoken)" /etc/dnsmasq.d/statics.conf | sort -u |
+      grep -oP "($mtoken|$stoken|$wtoken)" /etc/dnsmasq.d/statics.conf | sort -u |
               xargs -t -i ipmitool -I lanplus -U $USERNAME -E -H {} power status
       ```
 
    * Power off all NCNs.
 
       ```bash
-      pit# grep -oP "($mtoken|$stoken|$wtoken)" /etc/dnsmasq.d/statics.conf | sort -u |
+      grep -oP "($mtoken|$stoken|$wtoken)" /etc/dnsmasq.d/statics.conf | sort -u |
               xargs -t -i ipmitool -I lanplus -U $USERNAME -E -H {} power off
       ```
 
 <a name="ensure-time-is-accurate-before-deploying-ncns"></a>
 
-### 1.2 Ensure time is accurate before deploying NCNs
-
-**NOTE:** Optionally, in order to use a timezone other than UTC, instead of step 1 below, follow
-[this procedure for setting a local timezone](../operations/node_management/Configure_NTP_on_NCNs.md#set-a-local-timezone). Then
-proceed to step 2.
-
-1. Ensure that the PIT node has the correct current time.
-
-   The time can be inaccurate if the system has been powered off for a long time, or, for example, the CMOS was cleared on a Gigabyte node. See [Clear Gigabyte CMOS](clear_gigabyte_cmos.md).
-
-   > **This step should not be skipped.**
-
-   Check the time on the PIT node to see whether it matches the current time:
-
-   ```bash
-   pit# date "+%Y-%m-%d %H:%M:%S.%6N%z"
-   ```
-
-   If the time is inaccurate, set the time manually.
-
-   ```bash
-   pit# timedatectl set-time "2019-11-15 00:00:00"
-   ```
-
-   Run the NTP script:
-
-   ```bash
-   pit# /root/bin/configure-ntp.sh
-   ```
-
-   This ensures that the PIT is configured with an accurate date/time, which will be propagated to the NCNs during boot.
-
-   If the error `Failed to set time: NTP unit is active` is observed, then stop `chrony` first.
-
-   ```bash
-   pit# systemctl stop chronyd
-   ```
-
-   Then run the commands above to complete the process.
-
-1. Ensure that the current time is set in BIOS for all management NCNs.
-
-   Each NCN is booted to the BIOS menu, the date and time are checked, and set to the current UTC time if needed.
-
-   > **NOTE:** Some steps in this procedure depend on `USERNAME` and `IPMI_PASSWORD` being set. This is done in
-[Tokens and IPMI Password](#tokens-and-ipmi-password).
-
-   Repeat the following process for each NCN.
-
-   1. Set the `bmc` variable to the name of the BMC of the NCN being checked.
-
-      **Important:** Be sure to change the below example to the appropriate NCN.
-
-      ```console
-      pit# bmc=ncn-w001-mgmt
-      ```
-
-   1. Start an IPMI console session to the NCN.
-
-      ```console
-      pit# conman -j $bmc
-      ```
-
-   1. Using another terminal to watch the console, boot the node to BIOS.
-
-      ```console
-      pit# ipmitool -I lanplus -U $USERNAME -E -H $bmc chassis bootdev bios &&
-           ipmitool -I lanplus -U $USERNAME -E -H $bmc chassis power off && sleep 10 &&
-           ipmitool -I lanplus -U $USERNAME -E -H $bmc chassis power on
-      ```
-
-      > For HPE NCNs, the above process will boot the nodes to their BIOS; however, the BIOS menu is unavailable through conman because
-      > the node is booted into a graphical BIOS menu.
-      >
-      > In order to access the serial version of the BIOS menu, perform the `ipmitool` steps above to boot the node.
-      > Then, in conman, press `ESC+9` key combination when
-      > the following messages are shown on the console. That key combination will open a menu that can be used to enter
-      > the BIOS using conman.
-      >
-      > ```text
-      > For access via BIOS Serial Console:
-      > Press 'ESC+9' for System Utilities
-      > Press 'ESC+0' for Intelligent Provisioning
-      > Press 'ESC+!' for One-Time Boot Menu
-      > Press 'ESC+@' for Network Boot
-      > ```
-      >
-      > For HPE NCNs, the date configuration menu is at the following path: `System Configuration -> BIOS/Platform Configuration (RBSU) -> Date and Time`.
-      >
-      > Alternatively, for HPE NCNs, log in to the BMC's web interface and access the HTML5 console for the node, in order to interact with the graphical BIOS.
-      > From the administrator's own machine, create an SSH tunnel (`-L` creates the tunnel; `-N` prevents a shell and stubs the connection):
-      >
-      > ```bash
-      > linux# bmc=ncn-w001-mgmt # Change this to be the appropriate node
-      > linux# ssh -L 9443:$bmc:443 -N root@eniac-ncn-m001
-      > ```
-      >
-      > Opening a web browser to `https://localhost:9443` will give access to the BMC's web interface.
-
-   1. When the node boots, the conman session can be used to see the BIOS menu, in order to check and set the time to current UTC time.
-      The process varies depending on the vendor of the NCN.
-
-   1. After the correct time has been verified, power off the NCN.
-
-   Repeat the above process for each NCN.
-
-<a name="update_management_node_firmware"></a>
-
-## 2. Update management node firmware
+## 2. Update Management Node Firmware
 
 > All firmware can be found in the HFP package provided with the Shasta release.
 
@@ -317,7 +209,7 @@ be performed are in the [Deploy](#deploy) section.
     kernel, initrd, SquashFS, and `script.ipxe` bootscript.
 
     ```bash
-    pit# /root/bin/set-sqfs-links.sh
+    /root/bin/set-sqfs-links.sh
     ```
 
     > Every NCN except for `ncn-m001` should be included in the output from this script. If that is not the case,
@@ -337,14 +229,14 @@ be performed are in the [Deploy](#deploy) section.
     > **NOTE:** This script will enable DCMI/IPMI on Hewlett-Packard Enterprise servers equipped with ILO. If `ipmitool` is not working at this time, it will after running this script.
 
     ```bash
-    pit# /root/bin/bios-baseline.sh
+    /root/bin/bios-baseline.sh
     ```
 
 1. <a name="set-uefi-and-power-off"></a>Set each node to always UEFI Network Boot, and ensure they are powered off
 
     ```bash
-    pit# grep -oP "($mtoken|$stoken|$wtoken)" /etc/dnsmasq.d/statics.conf | sort -u | xargs -t -i ipmitool -I lanplus -U $USERNAME -E -H {} chassis bootdev pxe options=efiboot,persistent
-    pit# grep -oP "($mtoken|$stoken|$wtoken)" /etc/dnsmasq.d/statics.conf | sort -u | xargs -t -i ipmitool -I lanplus -U $USERNAME -E -H {} power off
+    grep -oP "($mtoken|$stoken|$wtoken)" /etc/dnsmasq.d/statics.conf | sort -u | xargs -t -i ipmitool -I lanplus -U $USERNAME -E -H {} chassis bootdev pxe options=efiboot,persistent
+    grep -oP "($mtoken|$stoken|$wtoken)" /etc/dnsmasq.d/statics.conf | sort -u | xargs -t -i ipmitool -I lanplus -U $USERNAME -E -H {} power off
     ```
 
     > **NOTE:** The NCN boot order is further explained in [NCN Boot Workflow](../background/ncn_boot_workflow.md).
@@ -358,14 +250,14 @@ be performed are in the [Deploy](#deploy) section.
       > `read -s` is used to prevent the password from being written to the screen or the shell history.
 
       ```bash
-      pit# read -s SW_ADMIN_PASSWORD
-      pit# export SW_ADMIN_PASSWORD
+      read -s SW_ADMIN_PASSWORD
+      export SW_ADMIN_PASSWORD
       ```
 
    1. Run the LiveCD preflight checks.
 
       ```bash
-      pit# csi pit validate --livecd-preflight
+      csi pit validate --livecd-preflight
       ```
 
       > Note: Ignore any errors about not being able resolve `arti.dev.cray.com`.
@@ -373,7 +265,7 @@ be performed are in the [Deploy](#deploy) section.
 1. Print the available consoles.
 
     ```bash
-    pit# conman -q
+    conman -q
     ```
 
     Expected output looks similar to the following:
@@ -397,7 +289,7 @@ be performed are in the [Deploy](#deploy) section.
     Boot all the storage nodes. `ncn-s001` will start 1 minute after the other storage nodes.
 
     ```bash
-    pit# grep -oP $stoken /etc/dnsmasq.d/statics.conf | grep -v "ncn-s001-" | sort -u |
+    grep -oP $stoken /etc/dnsmasq.d/statics.conf | grep -v "ncn-s001-" | sort -u |
             xargs -t -i ipmitool -I lanplus -U $USERNAME -E -H {} power on; \
          sleep 60; ipmitool -I lanplus -U $USERNAME -E -H ncn-s001-mgmt power on
     ```
@@ -405,7 +297,7 @@ be performed are in the [Deploy](#deploy) section.
 1. Observe the installation through the console of `ncn-s001-mgmt`.
 
     ```bash
-    pit# conman -j ncn-s001-mgmt
+    conman -j ncn-s001-mgmt
     ```
 
     From there an administrator can witness console output for the `cloud-init` scripts.
@@ -419,7 +311,7 @@ be performed are in the [Deploy](#deploy) section.
    **NOTE:** Once all storage nodes are up and the message `...sleeping 5 seconds until /etc/kubernetes/admin.conf` appears on `ncn-s001`'s console, it is safe to proceed with booting the **Kubernetes master nodes and worker nodes**
 
     ```bash
-    pit# grep -oP "($mtoken|$wtoken)" /etc/dnsmasq.d/statics.conf | sort -u | xargs -t -i ipmitool -I lanplus -U $USERNAME -E -H {} power on
+    grep -oP "($mtoken|$wtoken)" /etc/dnsmasq.d/statics.conf | sort -u | xargs -t -i ipmitool -I lanplus -U $USERNAME -E -H {} power on
     ```
 
 1. Stop watching the console from `ncn-s001`.
@@ -436,7 +328,7 @@ be performed are in the [Deploy](#deploy) section.
     Print the console name:
 
     ```bash
-    pit# conman -q | grep m002
+    conman -q | grep m002
     ```
 
     Expected output looks similar to the following:
@@ -448,7 +340,7 @@ be performed are in the [Deploy](#deploy) section.
     Then join the console:
 
     ```bash
-    pit# conman -j ncn-m002-mgmt
+    conman -j ncn-m002-mgmt
     ```
 
     **NOTE:** If the nodes have PXE boot issues (e.g. getting PXE errors, not pulling the ipxe.efi binary) see [PXE boot troubleshooting](pxe_boot_troubleshooting.md)
@@ -464,7 +356,7 @@ be performed are in the [Deploy](#deploy) section.
     > When the following command prompts for a password, enter the root password for `ncn-m002`.
 
     ```bash
-    pit# ssh ncn-m002 kubectl get nodes -o wide
+    ssh ncn-m002 kubectl get nodes -o wide
     ```
 
     Expected output looks similar to the following:
@@ -485,7 +377,7 @@ be performed are in the [Deploy](#deploy) section.
         > When the following command prompts for a password, enter the root password for `ncn-m002`.
 
         ```ShellSession
-        pit# rsync -av ncn-m002:.ssh/ /root/.ssh/
+        rsync -av ncn-m002:.ssh/ /root/.ssh/
         ```
 
         Expected output looks similar to the following:
@@ -506,7 +398,7 @@ be performed are in the [Deploy](#deploy) section.
     1. Make a list of all of the NCNs (including `ncn-m001`).
 
         ```ShellSession
-        pit# NCNS=$(grep -oP "ncn-[msw][0-9]{3}" /etc/dnsmasq.d/statics.conf | sort -u | tr '\n' ',' | sed 's/,$//') ; echo "${NCNS}"
+        NCNS=$(grep -oP "ncn-[msw][0-9]{3}" /etc/dnsmasq.d/statics.conf | sort -u | tr '\n' ',' | sed 's/,$//') ; echo "${NCNS}"
         ```
 
         Expected output looks similar to the following:
@@ -520,7 +412,7 @@ be performed are in the [Deploy](#deploy) section.
         The following command should not prompt for a password.
 
         ```ShellSession
-        pit# PDSH_SSH_ARGS_APPEND='-o StrictHostKeyChecking=no' pdsh -Sw "${NCNS}" date && echo SUCCESS || echo ERROR
+        PDSH_SSH_ARGS_APPEND='-o StrictHostKeyChecking=no' pdsh -Sw "${NCNS}" date && echo SUCCESS || echo ERROR
         ```
 
         Expected output looks similar to the following:
@@ -565,7 +457,7 @@ be performed are in the [Deploy](#deploy) section.
 Run the following command on the PIT node to validate that the expected LVM labels are present on disks on the master and worker nodes.
 
 ```bash
-pit# /usr/share/doc/csm/install/scripts/check_lvm.sh
+/usr/share/doc/csm/install/scripts/check_lvm.sh
 ```
 
 #### 3.3.2 Expected check output
@@ -629,177 +521,14 @@ The manual checks are considered successful if all of the `blkid` commands repor
 If any of the `lsblk` commands return no output, then the check is a failure. **Any failures must be resolved before continuing.** See the following section
 for details on how to do so.
 
-<a name="lvm-check-failure-recovery"></a>
 
+# TODO: Remove and update goss test to refer to the prepare-management-nodes guide
 #### 3.3.4 LVM check failure recovery
 
-If there are LVM check failures, then the problem must be resolved before continuing with the install.
-
-* If **any master node** has the problem, then wipe and redeploy **all** of the NCNs before continuing the installation:
-    1. Wipe each worker node using the 'Basic Wipe' section of [Wipe NCN Disks for Reinstallation](wipe_ncn_disks_for_reinstallation.md#basic-wipe).
-    1. Wipe each master node (**except** `ncn-m001` because it is the PIT node) using the 'Basic Wipe' section of [Wipe NCN Disks for Reinstallation](wipe_ncn_disks_for_reinstallation.md#basic-wipe).
-    1. Wipe each storage node using the 'Full Wipe' section of [Wipe NCN Disks for Reinstallation](wipe_ncn_disks_for_reinstallation.md#full-wipe).
-    1. Return to the [Set each node to always UEFI Network Boot, and ensure they are powered off](#set-uefi-and-power-off) step of the [Deploy Management Nodes](#deploy_management_nodes) section above.
-
-* If **only worker nodes** have the problem, then wipe and redeploy the affected worker nodes before continuing the installation:
-    1. Wipe each affected worker node using the 'Basic Wipe' section of [Wipe NCN Disks for Reinstallation](wipe_ncn_disks_for_reinstallation.md#basic-wipe).
-    1. Power off each affected worker node.
-    1. Return to the [Boot the Master and Worker Nodes](#boot-master-and-worker-nodes) step of the [Deploy Management Nodes](#deploy_management_nodes) section above.
-        * Note: The `ipmitool` command will give errors trying to power on the unaffected nodes, because they are already powered on -- this is expected and not a problem.
-
-<a name="check-for-unused-drives-on-utility-storage-nodes"></a>
-
-### 3.4 Check for unused drives on utility storage nodes
-
-> **IMPORTANT:** Do the following if NCNs are Gigabyte hardware. It is suggested (but optional) for HPE NCNs.
->
-> **IMPORTANT:** Estimate the expected number of OSDs using the following table and using this equation:
->
-> `total_osds` = `(number of utility storage/Ceph nodes)` `*` `(OSD count from table below for the appropriate hardware)`
-
-| Hardware Manufacturer | OSD Drive Count (not including OS drives)|
-| :-------------------: | :---------------------------------------: |
-| GigaByte              | 12 |
-| HPE                   | 8  |
-
-#### Option 1
-
-  If there are OSDs on each node (`ceph osd tree` can show this), then all the nodes are in Ceph. That means the orchestrator can be used to look for the devices.
-
-1. Get the number of OSDs in the cluster.
-
-    ```bash
-    ncn-s# ceph -f json-pretty osd stat |jq .num_osds
-    24
-    ```
-
-   **IMPORTANT:** If the returned number of OSDs is equal to `total_osds` calculated, then skip the following steps. If not, then proceed with the below additional checks and remediation steps.
-
-1. Compare the number of OSDs to the output (which should resemble the example below). The number of drives will depend on the server hardware.
-
-    > **NOTE:** If the Ceph cluster is large and has a lot of nodes, a node may be specified after the below command to limit the results.
-
-    ```bash
-    ncn-s# ceph orch device ls
-    Hostname  Path      Type  Serial              Size   Health   Ident  Fault  Available
-    ncn-s001  /dev/sda  ssd   PHYF015500M71P9DGN  1920G  Unknown  N/A    N/A    No
-    ncn-s001  /dev/sdb  ssd   PHYF016500TZ1P9DGN  1920G  Unknown  N/A    N/A    No
-    ncn-s001  /dev/sdc  ssd   PHYF016402EB1P9DGN  1920G  Unknown  N/A    N/A    No
-    ncn-s001  /dev/sdd  ssd   PHYF016504831P9DGN  1920G  Unknown  N/A    N/A    No
-    ncn-s001  /dev/sde  ssd   PHYF016500TV1P9DGN  1920G  Unknown  N/A    N/A    No
-    ncn-s001  /dev/sdf  ssd   PHYF016501131P9DGN  1920G  Unknown  N/A    N/A    No
-    ncn-s001  /dev/sdi  ssd   PHYF016500YB1P9DGN  1920G  Unknown  N/A    N/A    No
-    ncn-s001  /dev/sdj  ssd   PHYF016500WN1P9DGN  1920G  Unknown  N/A    N/A    No
-    ncn-s002  /dev/sda  ssd   PHYF0155006W1P9DGN  1920G  Unknown  N/A    N/A    No
-    ncn-s002  /dev/sdb  ssd   PHYF0155006Z1P9DGN  1920G  Unknown  N/A    N/A    No
-    ncn-s002  /dev/sdc  ssd   PHYF015500L61P9DGN  1920G  Unknown  N/A    N/A    No
-    ncn-s002  /dev/sdd  ssd   PHYF015502631P9DGN  1920G  Unknown  N/A    N/A    No
-    ncn-s002  /dev/sde  ssd   PHYF0153000G1P9DGN  1920G  Unknown  N/A    N/A    No
-    ncn-s002  /dev/sdf  ssd   PHYF016401T41P9DGN  1920G  Unknown  N/A    N/A    No
-    ncn-s002  /dev/sdi  ssd   PHYF016504C21P9DGN  1920G  Unknown  N/A    N/A    No
-    ncn-s002  /dev/sdj  ssd   PHYF015500GQ1P9DGN  1920G  Unknown  N/A    N/A    No
-    ncn-s003  /dev/sda  ssd   PHYF016402FP1P9DGN  1920G  Unknown  N/A    N/A    No
-    ncn-s003  /dev/sdb  ssd   PHYF016401TE1P9DGN  1920G  Unknown  N/A    N/A    No
-    ncn-s003  /dev/sdc  ssd   PHYF015500N51P9DGN  1920G  Unknown  N/A    N/A    No
-    ncn-s003  /dev/sdd  ssd   PHYF0165010Z1P9DGN  1920G  Unknown  N/A    N/A    No
-    ncn-s003  /dev/sde  ssd   PHYF016500YR1P9DGN  1920G  Unknown  N/A    N/A    No
-    ncn-s003  /dev/sdf  ssd   PHYF016500X01P9DGN  1920G  Unknown  N/A    N/A    No
-    ncn-s003  /dev/sdi  ssd   PHYF0165011H1P9DGN  1920G  Unknown  N/A    N/A    No
-    ncn-s003  /dev/sdj  ssd   PHYF016500TQ1P9DGN  1920G  Unknown  N/A    N/A    No
-    ```
-
-    If there are devices that show `Available` as `Yes` and they are not being automatically added, that device may need to be zapped.
-
-    **IMPORTANT:** Prior to zapping any device, ensure that it is not being used.
-
-1. Check to see if the number of devices is less than the number of listed drives in the output from step 1.
-
-    ```bash
-    ncn-s# ceph orch device ls|grep dev|wc -l
-    24
-    ```
-
-    If the numbers are equal, but less than the `total_osds` calculated, then the `ceph-mgr` daemon may need to be failed in order to get a fresh inventory.
-
-    ```bash
-    ncn-s# ceph mgr fail $(ceph mgr dump | jq -r .active_name)
-    ```
-
-    Wait 5 minutes and then re-check `ceph orch device ls`. See if the drives are still showing as `Available`. If so, then proceed to the next step.
-
-1. `ssh` to the host and look at `lsblk` output and check against the device from the above `ceph orch device ls`
-
-    ```bash
-    ncn-s# lsblk
-    NAME                                                                                                 MAJ:MIN RM   SIZE RO TYPE   MOUNTPOINT
-    loop0                                                                                                   7:0    0   4.2G  1 loop  / run/    rootfsbase
-    loop1                                                                                                  7:1    0    30G  0 loop
-     └─live-overlay-pool                                                                                  254:8    0   300G  0 dm
-    loop2                                                                                                  7:2    0   300G  0 loop
-     └─live-overlay-pool                                                                                  254:8    0   300G  0 dm
-    sda                                                                                                    8:0    0   1.8T  0 disk
-     └─ceph--0a476f53--8b38--450d--8779--4e587402f8a8-osd--data--b620b7ef--184a--46d7--9a99--771239e7a323 254:7    0   1.8T  0 lvm
-    ```
-
-    * If it has an LVM volume like above, then it may be in use. In that case, do the option 2 check below to make sure that the drive can be wiped.
-
-#### Option 2
-
-1. Log into **each** `ncn-s` node and check for unused drives.
-
-    ```bash
-    ncn-s# cephadm shell -- ceph-volume inventory
-    ```
-
-    **IMPORTANT:** The `cephadm` command may output this warning `WARNING: The same type, major and minor should not be used for multiple devices.`. Ignore this warning.
-
-    The field `available` would be `True` if Ceph sees the drive as empty and can
-    be used. For example:
-
-    ```text
-    Device Path               Size         rotates available Model name
-    /dev/sda                  447.13 GB    False   False     SAMSUNG MZ7LH480
-    /dev/sdb                  447.13 GB    False   False     SAMSUNG MZ7LH480
-    /dev/sdc                  3.49 TB      False   False     SAMSUNG MZ7LH3T8
-    /dev/sdd                  3.49 TB      False   False     SAMSUNG MZ7LH3T8
-    /dev/sde                  3.49 TB      False   False     SAMSUNG MZ7LH3T8
-    /dev/sdf                  3.49 TB      False   False     SAMSUNG MZ7LH3T8
-    /dev/sdg                  3.49 TB      False   False     SAMSUNG MZ7LH3T8
-    /dev/sdh                  3.49 TB      False   False     SAMSUNG MZ7LH3T8
-    ```
-
-    Alternatively, just dump the paths of available drives:
-
-    ```bash
-    ncn-s# cephadm shell -- ceph-volume inventory --format json-pretty | jq -r '.[]|select(.available==true)|.path'
-    ```
-
-##### Wipe and add drives
-
-1. Wipe the drive **ONLY after confirming that the drive is not being used by the current Ceph cluster** using options 1, 2, or both.
-
-    > The following example wipes drive `/dev/sdc` on `ncn-s002`. Replace these values with the appropriate ones for the situation.
-
-    ```bash
-    ncn-s# ceph orch device zap ncn-s002 /dev/sdc --force
-    ```
-
-1. Add unused drives.
-
-    ```bash
-    ncn-s# cephadm shell -- ceph-volume lvm create --data /dev/sd<drive to add> --bluestore
-    ```
-
-More information can be found at [the `cephadm` reference page](../operations/utility_storage/Cephadm_Reference_Material.md).
-
-<a name="configure_after_management_node_deployment"></a>
-
-## 4. Configure after management node deployment
-
-After the management nodes have been deployed, configuration can be applied to the booted nodes.
+# TODO: Move to a goss test
+#### 3.4 Check for unused drives on utility storage nodes
 
 <a name="livecd-cluster-authentication"></a>
-
 ### 4.1 LiveCD cluster authentication
 
 The LiveCD needs to authenticate with the cluster to facilitate the rest of the CSM installation.
@@ -811,8 +540,8 @@ The LiveCD needs to authenticate with the cluster to facilitate the rest of the 
    Run the following commands on the PIT node to extract the value of the `first-master-hostname` field from the `/var/www/ephemeral/configs/data.json` file:
 
    ```bash
-   pit# FM=$(cat /var/www/ephemeral/configs/data.json | jq -r '."Global"."meta-data"."first-master-hostname"')
-   pit# echo $FM
+   FM=$(cat /var/www/ephemeral/configs/data.json | jq -r '."Global"."meta-data"."first-master-hostname"')
+   echo $FM
    ```
 
 1. Copy the Kubernetes configuration file from that node to the LiveCD to be able to use `kubectl` as cluster administrator.
@@ -820,14 +549,14 @@ The LiveCD needs to authenticate with the cluster to facilitate the rest of the 
    Run the following commands on the PIT node:
 
    ```bash
-   pit# mkdir -v ~/.kube
-   pit# scp ${FM}.nmn:/etc/kubernetes/admin.conf ~/.kube/config
+   mkdir -v ~/.kube
+   scp ${FM}.nmn:/etc/kubernetes/admin.conf ~/.kube/config
    ```
 
 1. Validate that `kubectl` commands run successfully from the PIT node.
 
     ```bash
-    pit# kubectl get nodes -o wide
+    kubectl get nodes -o wide
     ```
 
     Expected output looks similar to the following:
@@ -848,7 +577,7 @@ The LiveCD needs to authenticate with the cluster to facilitate the rest of the 
 Run the following commands on the PIT node.
 
 ```bash
-pit# pushd /var/www/ephemeral && ${CSM_RELEASE}/lib/install-goss-tests.sh && popd
+pushd /var/www/ephemeral && ${CSM_RELEASE}/lib/install-goss-tests.sh && popd
 ```
 
 <a name="remove-default-ntp-pool"></a>
@@ -858,7 +587,7 @@ pit# pushd /var/www/ephemeral && ${CSM_RELEASE}/lib/install-goss-tests.sh && pop
 Run the following command on the PIT node to remove the default pool, which can cause contention issues with NTP.
 
 ```ShellSession
-pit# pdsh -b -S -w "$(grep -oP 'ncn-\w\d+' /etc/dnsmasq.d/statics.conf | grep -v m001 | sort -u |  tr -t '\n' ',')" \
+pdsh -b -S -w "$(grep -oP 'ncn-\w\d+' /etc/dnsmasq.d/statics.conf | grep -v m001 | sort -u |  tr -t '\n' ',')" \
         'sed -i "s/^! pool pool\.ntp\.org.*//" /etc/chrony.conf' && echo SUCCESS
 ```
 
@@ -879,13 +608,13 @@ Observe the output of the checks. If there are any failures, remediate them.
 1. Check the storage nodes.
 
    ```bash
-   pit# csi pit validate --ceph | tee csi-pit-validate-ceph.log
+   csi pit validate --ceph | tee csi-pit-validate-ceph.log
    ```
 
    Once that command has finished, the following will extract the test totals reported for each node:
 
    ```bash
-   pit# grep "Total Test" csi-pit-validate-ceph.log
+   grep "Total Test" csi-pit-validate-ceph.log
    ```
 
    Example output for a system with three storage nodes:
@@ -907,13 +636,13 @@ Observe the output of the checks. If there are any failures, remediate them.
    all of them and not just the final one.** A `grep` command is provided to help with this.
 
    ```bash
-   pit# csi pit validate --k8s | tee csi-pit-validate-k8s.log
+   csi pit validate --k8s | tee csi-pit-validate-k8s.log
    ```
 
    Once that command has finished, the following will extract the test totals reported for each node:
 
    ```bash
-   pit# grep "Total Test" csi-pit-validate-k8s.log
+   grep "Total Test" csi-pit-validate-k8s.log
    ```
 
    Example output for a system with five master and worker nodes (excluding the PIT node):
@@ -928,16 +657,33 @@ Observe the output of the checks. If there are any failures, remediate them.
 
    If these total lines report any failed tests, then look through the full output of the test in `csi-pit-validate-k8s.log` to see which node had the failed test and what the details are for that test.
 
-   > **WARNING:** Notes on specific failures:
-   >
-   > * If any of the `FS Label` tests fail (they have names like `Master Node ETCDLVM FS Label` or `Worker Node CONLIB FS Label`),
-   > then run manual tests on the node which reported the failure. See [Manual LVM Check Procedure](#manual-lvm-check-procedure). If the manual tests fail,
-   > then the problem must be resolved before continuing to the next step. See [LVM Check Failure Recovery](#lvm-check-failure-recovery).
-   > * If the `Weave Health` test fails, run `weave --local status connections` on the node where the test failed. If messages similar to
-   > `IP allocation was seeded by different peers` are seen, then `weave` appears to be split-brained. At this point, it is necessary to wipe
-   > the NCNs and start the PXE boot again:
-   >    1. Wipe the NCNs using the 'Basic Wipe' section of [Wipe NCN Disks for Reinstallation](wipe_ncn_disks_for_reinstallation.md).
-   >    1. Return to the 'Boot the **Storage Nodes**' step of [Deploy Management Nodes](#deploy_management_nodes) section above.
+# TODO This needs to move to a goss test
+1. Ensure that `weave` has not become split-brained.
+
+   To ensure that `weave` is operating as a single cluster, run the following command on the PIT node to check each member of the Kubernetes cluster:
+
+   ```ShellSession
+   ncn# pdsh -b -S -w "$(grep -oP 'ncn-[mw][0-9]{3}' /etc/dnsmasq.d/statics.conf | grep -v '^ncn-m001$' | sort -u |  tr -t '\n' ',')" \
+           'weave --local status connections | grep -i failed || true'
+   ```
+
+<a name="optional-validation"></a>
+
+### 5.2 Optional Validation
+
+   1. Verify that all the pods in the `kube-system` namespace are `Running` or `Completed`.
+
+      Run the following command on any Kubernetes master or worker node, or the PIT node:
+
+      ```bash
+      ncn-mw/kubectl get pods -o wide -n kube-system | grep -Ev '(Running|Completed)'
+      ```
+
+      If any pods are listed by this command, it means they are not in the `Running` or `Completed` state. That needs to be investigated before proceeding.
+
+   1. Verify that the ceph-csi requirements are in place.
+
+      See [Ceph CSI Troubleshooting](ceph_csi_troubleshooting.md) for details.
 
 <a name="important-checkpoint"></a>
 
@@ -951,4 +697,4 @@ Before proceeding, be aware that this is the last point where the other NCNs can
 
 After completing the deployment of the management nodes, the next step is to install the CSM services.
 
-See [Install CSM Services](index.md#install_csm_services)
+See [Install CSM Services](index.md#6-install-csm-services)

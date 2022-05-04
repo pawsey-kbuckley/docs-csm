@@ -75,4 +75,5 @@
 
 ## Stage completed
 
-This stage is completed. Continue to [Validate CSM Health](../index.md#validate_csm_health) on the main upgrade page.
+This stage is completed. See to [*Validate CSM Health*](../index.md#6-validate-csm-health) on the main upgrade page.
+

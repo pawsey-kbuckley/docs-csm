@@ -1,6 +1,6 @@
-# Boot LiveCD Virtual ISO
+# Boot LiveCD RemoteISO
 
-This page will walk-through booting the LiveCD `.iso` file directly onto a BMC.
+This page will walkthrough booting the LiveCD `.iso` file directly onto a BMC.
 
 ### Topics
 
@@ -97,7 +97,7 @@ Gigabyte BMCs allow for booting over HTTP.
 
 The ISO boots with no password, requiring one be set on first login.
 Continue the bootstrap process by setting the root password
-following the procedure [First Login](bootstrap_livecd_remote_iso.md#first-login).
+following the procedure [First Login](../install/pre-installation.md#first-login).
 
 > **NOTE:** The root OS `/` directory is writable without persistence. This means that restarting the machine will result in all changes being lost. Before restarting, consider following [Backing up the Overlay COW FS](#backing-up-the-overlay-cow-fs) and the accompanying [Restoring from an Overlay COW FS Backup](#restoring-from-an-overlay-cow-fs-backup) section.
 

@@ -16,32 +16,30 @@ which must create the initial configuration payload and configure the management
 whereas a reinstall can reuse a previous configuration payload and skip the configuration of management
 network switches. The first time install will check and then may update firmware for various components
 whereas the reinstall will check and indicate that no firmware update is required. There are two different
-ways to use the LiveCD, either from a RemoteISO or a USB device, which are described in [Bootstrap PIT Node](../install/index.md#bootstrap_pit_node).
+ways to use the LiveCD, either from a RemoteISO or a USB device, which are described in [Bootstrap PIT Node](../install/index.md#1-bootstrap-pit-node).
 There are a few places where a comment will be made in a procedure for how one of the scenarios needs to do something differently.
 
    * First time Install
-      1. [Prepare Configuration Payload](../install/index.md#prepare_configuration_payload) creates the initial configuration payload.
-      1. [Bootstrap PIT Node](../install/index.md#bootstrap_pit_node)
-      1. [Configure Management Network Switches](../install/index.md#configure_management_network)
+      1. [Bootstrap PIT Node](../install/index.md#1-bootstrap-pit-node)
+      1. [Configure Management Network Switches](../install/index.md#4-configure-management-network-switches)
 
    * Reinstall
-      1. [Prepare Configuration Payload](../install/index.md#prepare_configuration_payload) can reuse a previous configuration payload.
       1. There may be additional steps to manually wipe disks on the management nodes and do other actions to prepare
          the management node hardware for the reinstall.
-      1. [Bootstrap PIT Node](../install/index.md#bootstrap_pit_node)
-      1. Can skip the procedure to [Configure Management Network Switches](../install/index.md#configure_management_network)
+      1. [Bootstrap PIT Node](../install/index.md#1-bootstrap-pit-node)
+      1. Can skip the procedure to [Configure Management Network Switches](../install/index.md#4-configure-management-network-switches)
 
 The two paths merge together after configuration of the management network switches to do later actions
 the same regardless of the starting point in the workflow.
 
-   1. [Deploy Management Nodes](../install/index.md#deploy_management_nodes)
-   1. [Install CSM Services](../install/index.md#install_csm_services)
-   1. [Validate CSM Health Before Final NCN Deployment](../install/index.md#validate_csm_health_before_final_ncn_deploy)
-   1. [Deploy Final NCN](../install/index.md#deploy_final_ncn)
-   1. [Configure Administrative Access](../install/index.md#configure_administrative_access)
-   1. [Validate CSM Health](../install/index.md#validate_csm_health)
+   1. [Deploy Management Nodes](../install/index.md#5-deploy-management-nodes)
+   1. [Install CSM Services](../install/index.md#6-install-csm-services)
+   1. [Validate CSM Health Before Final NCN Deployment](../install/index.md#3-validate-csm-health-before-final-ncn-deployment)
+   1. [Deploy Final NCN](../install/index.md#4-deploy-final-ncn)
+   1. [Configure Administrative Access](../install/index.md#5-configure-administrative-access)
+   1. [Validate CSM Health](../install/index.md#6-validate-csm-health)
    1. [Update Firmware with FAS](../operations/firmware/Update_Firmware_with_FAS.md)
-   1. [Prepare Compute Nodes](../install/index.md#prepare_compute_nodes)
+   1. [Prepare Compute Nodes](../install/index.md#9-prepare-compute-nodes)
 
 After completion of the firmware update with FAS and the preparation of compute nodes, the CSM product stream has
 been fully installed and configured. Refer to the _HPE Cray EX System Software Getting Started Guide S-8000_

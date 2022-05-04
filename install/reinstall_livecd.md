@@ -28,7 +28,7 @@ Setup a re-install of LiveCD on a node using the previous configuration.
     mylinuxpc> umount -v /dev/disk/by-label/PITDATA
     ```
 
-1. Follow the directions in [Bootstrap PIT Node from LiveCD USB](bootstrap_livecd_usb.md), and then return here and move onto the next step.
+1. Follow the directions in [Bootstrap PIT Node from LiveCD USB](livecd_boot_usb.md), and then return here and move onto the next step.
 
    The new tar.gz file can be stored anywhere, and can be used to reinitialize the LiveCD.
 

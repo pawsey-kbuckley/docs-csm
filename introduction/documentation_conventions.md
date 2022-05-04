@@ -38,7 +38,7 @@ screen output, file/path names, and other software constructs.
 
 #### Host name and account in command prompts
 
-The host name in a command prompt indicates where the command must be run. The account that must run the command is also indicated in the prompt.
+The host name in a command prompt indicates where the command must be run. The account that must run the command is also indicated in the prompt. The prompt will be dictated by a label on the step with the command.
 - The root or super-user account always has the # character at the end of the prompt
 - Any non-root account is indicated with `account@hostname`. A non-privileged account is referred to as user.
 

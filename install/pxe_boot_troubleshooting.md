@@ -342,7 +342,7 @@ In that case, use the following recovery procedure.
         pit# mount -vL PITDATA
         ```
 
-   - If using a remote ISO PIT, follow the [Bootstrap LiveCD Remote ISO](bootstrap_livecd_remote_iso.md) procedure up through (**and including**) the [Set Up The Site Link](bootstrap_livecd_remote_iso.md#set-up-site-link) step.
+   * This assumes the user has made it past the [Set Up The Site Link step in the First Login](pre-installation.md#2-first-login) procedure.
 
 1. Set variables for the system name, the CAN IP address for `ncn-m002`. the Kubernetes version, and the Ceph version.
 

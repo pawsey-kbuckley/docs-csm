@@ -59,9 +59,9 @@ The following administrative topics can be found in this guide:
 
 General information on what needs to be done before the initial install of CSM.
 
-- [Pre-Install Steps](preinstall/Preinstall.md)
-- [Change Air-Cooled BMC Credentials](preinstall/Change_River_BMC_Credentials.md)
-- [Change ServerTech PDU Credentials](preinstall/Change_ServerTech_PDU_Credentials.md)
+- [Pre-Install Steps](bare-metal/Bare-Metal.md)
+- [Change Air-Cooled BMC Credentials](bare-metal/Change_River_BMC_Credentials.md)
+- [Change ServerTech PDU Credentials](bare-metal/Change_ServerTech_PDU_Credentials.md)
 
 <a name="image-management"></a>
 

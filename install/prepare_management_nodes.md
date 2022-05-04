@@ -1,16 +1,14 @@
 # Prepare Management Nodes
 
-The procedures described on this page must be completed before any node is booted with the Cray Pre-Install Toolkit (PIT), which is performed in a later document. When the PIT
-node is referenced during these procedures, it means the node that will be booted as the PIT node.
+The procedures described on this page must be completed before any node is booted with the Cray Pre-Install Toolkit (PIT), which is performed in a later document. When the PIT node is referenced during these procedures, it means the node that will be booted as the PIT node.
 
-1. [Quiesce compute and application nodes](#quiesce_compute_and_application_nodes)
-1. [Disable DHCP service](#disable_dhcp_service)
-1. [Wipe disks on booted nodes](#wipe_disks_on_booted_nodes)
-1. [Set IPMI credentials](#set_ipmi_credentials)
-1. [Power off booted nodes](#power_off_booted_nodes)
-1. [Set node BMCs to DHCP](#set_node_bmcs_to_dhcp)
-1. [Wipe USB device on PIT node](#wipe_usb_device_on_pit_node)
-1. [Power off PIT node](#power_off_pit_node)
+## Topics
+
+ 1. [Quiesce Compute and Application Nodes](#quiesce_compute_and_application_nodes)
+ 1. [Disable DHCP Service](#disable_dhcp_service) (if any management nodes are booted)
+ 1. [Wipe Disks on Booted Nodes](#wipe_disks_on_booted_nodes)
+ 1. [Power Off Booted Nodes](#power_off_booted_nodes)
+ 1. [Set Node BMCs to DHCP](#set_node_bmcs_to_dhcp)
 
 <a name="quiesce_compute_and_application_nodes"></a>
 
@@ -55,7 +53,7 @@ If any of the management nodes are booted with Linux, then they have data from p
 
 **REQUIRED** If the above is true, then for each management node (**excluding** `ncn-m001`), log in and do a "full wipe" of the node's disks.
 
-See [full wipe from Wipe NCN Disks for Reinstallation](wipe_ncn_disks_for_reinstallation.md#full-wipe).
+See [full wipe from Wipe NCN Disks for Reinstallation](../operations/wipe_ncn_disks_for_reinstallation.md#full-wipe).
 
 <a name="set_ipmi_credentials"></a>
 
@@ -158,6 +156,7 @@ BMCs to be set back to DHCP before proceeding.
            done
     ```
 
+<<<<<<< HEAD
 1. Verify that the BMCs have been set to DHCP:
 
     ```bash
@@ -209,11 +208,13 @@ Shut down the LiveCD or `ncn-m001` node.
 ```bash
 linux# poweroff
 ```
+=======
+The process is now done, the NCNs are ready for a deploy.
+>>>>>>> MTL-1695
 
 <a name="next-topic"></a>
 
 ## Next topic
 
-The next step is to bootstrap the PIT node.
+See [Bootstrap PIT Node](index.md#1-bootstrap-pit-node).
 
-See [Bootstrap PIT Node](index.md#bootstrap_pit_node).

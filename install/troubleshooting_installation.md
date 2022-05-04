@@ -25,14 +25,7 @@ for additional information on system hardware, troubleshooting, and administrati
       If the root password on the LiveCD needs to be changed, then this procedure does the reset.
 
       See [Reset root Password on LiveCD](reset_root_password_on_LiveCD.md)
-   <a name="reinstall_livecd"></a>
 
-   1. Reinstall LiveCD
-
-      If a reinstall of the PIT node is needed, the data from the PIT node can be saved to the LiveCD USB and
-      the LiveCD USB can be rebuilt.
-
-      See [Reinstall LiveCD](reinstall_livecd.md)
    <a name="pxe_boot_troubleshooting"></a>
 
    1. PXE Boot Troubleshooting
@@ -49,7 +42,7 @@ for additional information on system hardware, troubleshooting, and administrati
       [Deploy Management Nodes](deploy_management_nodes.md) during the install, then the
       storage should be wiped so the node can be redeployed.
 
-      See [Wipe NCN Disks for Reinstallation](wipe_ncn_disks_for_reinstallation.md)
+      See [Wipe NCN Disks for Reinstallation](../operations/wipe_ncn_disks_for_reinstallation.md)
    <a name="restart_network_services_and_interfaces_on_ncns"></a>
 
    1. Restart Network Services and Interfaces on NCNs

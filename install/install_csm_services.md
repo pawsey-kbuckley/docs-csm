@@ -71,38 +71,38 @@ The following error may occur during the `Deploy CSM Applications and Services` 
 2021/10/05 18:42:58 Unable to SLS S3 secret from k8s:secrets "sls-s3-credentials" not found
 ```
 
-1. Verify that the `sls-s3-credentials` secret exists in the `default` namespace:
+1. (`pit#`) Verify that the `sls-s3-credentials` secret exists in the `default` namespace:
 
    ```bash
-   pit# kubectl get secret sls-s3-credentials
+   kubectl get secret sls-s3-credentials
    ```
 
    Example output:
 
-   ```text
-   NAME                 TYPE     DATA   AGE
-   sls-s3-credentials   Opaque   7      28d
-   ```
+      ```text
+      NAME                 TYPE     DATA   AGE
+      sls-s3-credentials   Opaque   7      28d
+      ```
 
-1. Check for running `sonar-sync` jobs. If there are no `sonar-sync` jobs, then wait for one to complete. The `sonar-sync` `CronJob` is responsible
+1. (`pit#`) Check for running `sonar-sync` jobs. If there are no `sonar-sync` jobs, then wait for one to complete. The `sonar-sync` `CronJob` is responsible
    for copying the `sls-s3-credentials` secret from the `default` namespace to the `services` namespace.
 
    ```bash
-   pit# kubectl -n services get pods -l cronjob-name=sonar-sync
+   kubectl -n services get pods -l cronjob-name=sonar-sync
    ```
 
    Example output:
 
-   ```text
-   NAME                          READY   STATUS      RESTARTS   AGE
-   sonar-sync-1634322840-4fckz   0/1     Completed   0          73s
-   sonar-sync-1634322900-pnvl6   1/1     Running     0          13s
-   ```
+      ```text
+      NAME                          READY   STATUS      RESTARTS   AGE
+      sonar-sync-1634322840-4fckz   0/1     Completed   0          73s
+      sonar-sync-1634322900-pnvl6   1/1     Running     0          13s
+      ```
 
-1. Verify that the `sls-s3-credentials` secret now exists in the `services` namespace.
+1. (`pit#`) Verify that the `sls-s3-credentials` secret now exists in the `services` namespace.
 
    ```bash
-   pit# kubectl -n services get secret sls-s3-credentials
+   kubectl -n services get secret sls-s3-credentials
    ```
 
    Example output:
@@ -126,4 +126,4 @@ Known potential issues along with suggested fixes are listed in [Troubleshoot Ne
 
 The next step is to validate CSM health before redeploying the final NCN.
 
-See [Validate CSM Health Before Final NCN Deployment](index.md#validate_csm_health_before_final_ncn_deploy).
+See [Validate CSM Health Before Final NCN Deployment](index.md#3-validate-csm-health-before-final-ncn-deployment).

@@ -111,7 +111,7 @@ The following steps must be performed on the system where the test is to be run:
 
    - Install the `docs-csm` RPM.
 
-      See [Check for Latest Documentation](../../update_product_stream/index.md#documentation).
+      See [Check for Latest Documentation](../../update_product_stream/index.md#check-for-latest-documentation).
 
    - Copy over the following files from a system where the `docs-csm` RPM is installed:
 
