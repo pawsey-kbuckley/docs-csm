@@ -8,7 +8,6 @@ This document provides links to troubleshooting information for services and fun
     * [SAT/HSM/CAPMC Component Power State Mismatch](known_issues/component_power_state_mismatch.md)
     * [HMS Discovery job not creating RedfishEndpoints in Hardware State Manager](known_issues/discovery_job_not_creating_redfish_endpoints.md)
     * [initrd.img.xz not found](known_issues/initrd.img.zx_not_found.md) 
-### Troubleshoot Topics
  * [Grafana Dashboards](../operations/system_management_health/Grafana_Dashboards_by_Component.md)
     * [Troubleshoot Grafana Dashboard](../operations/system_management_health/Troubleshoot_Grafana_Dashboard.md)
  * Troubleshoot Kubernetes
