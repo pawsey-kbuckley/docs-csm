@@ -34,7 +34,7 @@ Use the management scripts and text files to reset Gigabyte BMC to factory defau
     10.254.1.11 x3000c0s9b0 ncn-w002
     ```
 
-2. Use Redfish to reset the BMC to factory default, the BMC is running 12.84.01 or later version, run:
+2. Use Redfish to reset the BMC to factory default, if the BMC is running 12.84.01 or later version, run:
 
       ```bash
       ncn-w001# sh do_Redfish_BMC_Factory.sh
