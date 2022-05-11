@@ -19,7 +19,7 @@ Use the management scripts and text files to reset Gigabyte BMC to factory defau
 
 ### Apply the BMC Factory Command
 
-1. Create a `node.txt` file and add the target node information as shown:
+1. Create a `node.txt` file and add the target node information:
 
     Example `node.txt` file with two nodes:
 
