@@ -8,18 +8,18 @@ Use the management scripts and text files to reset Gigabyte BMC to factory defau
 
 - There are problems using the `ipmitool` command and Redfish does not respond
 - There are problems using the `ipmitool` command and Redfish is running
-- When BIOS or BMC flash procedures fail using Redfish
-   - Run the `do_bmc_factory_default.sh` script
-   - Run `ipmitool -I lanplus -U admin -P password -H BMC_or_CMC_IP mc reset cold` and flash it again after 5 minutes (300 seconds).
+- When BIOS or BMC flash procedures fails using Redfish
+  - Run the `do_bmc_factory_default.sh` script
+  - Run `ipmitool -I lanplus -U admin -P password -H BMC_or_CMC_IP mc reset cold` and flash it again after 5 minutes (300 seconds).
 - If booted from the PIT node:
-   - The firmware packages are located in the HFP package provided with the Shasta release
-   - The required scripts are located in `/var/www/fw/river/sh-svr-scripts`
+  - The firmware packages are located in the HFP package provided with the Shasta release
+  - The required scripts are located in `/var/www/fw/river/sh-svr-scripts`
 
 ## Procedure
 
 ### Apply the BMC Factory Command
 
-1.  Create a `node.txt` file and add the target node information as shown:
+1. Create a `node.txt` file and add the target node information as shown:
 
     Example `node.txt` file with two nodes:
 
@@ -52,9 +52,7 @@ Use the management scripts and text files to reset Gigabyte BMC to factory defau
     ncn-w001# sh do_bmc_power_control.sh raw 0x32 0x66
     ```
 
-
 3. Wait five minutes (300 seconds) for the BMC and Redfish to initialize.
-
 
     ```bash
     ncn-w001# sleep 300
