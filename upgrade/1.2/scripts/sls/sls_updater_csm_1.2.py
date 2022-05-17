@@ -33,6 +33,7 @@ from csm_1_2_upgrade.sls_updates import create_metallb_pools_and_asns
 from csm_1_2_upgrade.sls_updates import migrate_can_to_cmn
 from csm_1_2_upgrade.sls_updates import migrate_switch_names
 from csm_1_2_upgrade.sls_updates import remove_api_gw_from_hmnlb_reservations
+from csm_1_2_upgrade.sls_updates import rename_uai_bridge_reservation
 from csm_1_2_upgrade.sls_updates import remove_can_static_pool
 from csm_1_2_upgrade.sls_updates import remove_kube_api_reservations
 from csm_1_2_upgrade.sls_updates import sls_and_input_data_checks
@@ -51,7 +52,8 @@ help = """Upgrade a system SLS file from CSM 1.0 to CSM 1.2.
     7. Convert IPs of the CAN network.\n
     8. Create MetalLB Pools and ASN entries on CMN and NMN networks.\n
     9. Update uai_macvlan in NMN dhcp ranges and uai_macvlan VLAN.\n
-   10. Remove unused user networks (CAN or CHN) if requested [--retain-unused-user-network to keep].\n
+   10. Rename uai_macvlan_bridge reservation to uai_nmn_blackhole
+   11. Remove unused user networks (CAN or CHN) if requested [--retain-unused-user-network to keep].\n
 """
 
 
@@ -317,20 +319,25 @@ def main(
     update_nmn_uai_macvlan_dhcp_ranges(networks)
 
     #
+    # Rename uai_macvlan_bridge reservation to uai_nmn_blackhole
+    #   (not order dependent)
+    rename_uai_bridge_reservation(networks)
+
+    #
     # Remove superfluous user network if requested
     #   (ORDER DEPENDENT!!! - Must be run at end)
     #   NEVER REMOVE THE HSN!!!
     if retain_unused_user_network:
         if bican_user_network_name == "CAN":
-            click.secho("Removing unused CHN as requested", fg="bright_white")
-            networks.pop("CHN")
+            click.secho("Removing unused CHN (if it exists) as requested", fg="bright_white")
+            networks.pop("CHN", None)
         if bican_user_network_name == "CHN":
-            click.secho("Removing unused CAN as requested", fg="bright_white")
-            networks.pop("CAN")
+            click.secho("Removing unused CAN (if it exists) as requested", fg="bright_white")
+            networks.pop("CAN", None)
         if bican_user_network_name == "HSN":
-            click.secho("Removing unused CAN as requested", fg="bright_white")
-            networks.pop("CAN")
-            networks.pop("CHN")
+            click.secho("Removing unused CAN and CHN (if they exist) as requested", fg="bright_white")
+            networks.pop("CAN", None)
+            networks.pop("CHN", None)
 
     click.secho(
         f"Writing CSM 1.2 upgraded and schema validated SLS file to {sls_output_file.name}",
