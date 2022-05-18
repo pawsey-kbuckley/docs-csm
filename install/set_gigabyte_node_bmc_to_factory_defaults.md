@@ -13,12 +13,10 @@ Set the BMC to the factory default settings in the following cases:
 
 **Note**: This section refers to scripts that exist only in the PIT environment. If necessary, copy the LiveCD data from a different machine to get these scripts.
 
-  - Run `ipmitool -I lanplus -U admin -P password -H BMC_or_CMC_IP mc reset cold` and flash it again after 5 minutes (300 seconds).
+- Run `ipmitool -I lanplus -U admin -P password -H BMC_or_CMC_IP mc reset cold` and flash it again after 5 minutes (300 seconds).
 - If booted from the PIT node:
   - The firmware packages are located in the HFP package provided with the Shasta release
   - The required scripts are located in `/var/www/fw/river/sh-svr-scripts`
-
-## Procedure
 
 ### Apply the BMC Factory Command
 
@@ -95,19 +93,19 @@ Set the BMC to the factory default settings in the following cases:
     ncn-w001# sh do_bmc_change_mode_to_manual.sh change
     ```
 
-1. If the BMC is in a booted management NCN running Shasta v1.3 or later, then reapply the static IP address and clear the DHCP address from HSM/KEA.
+7. If the BMC is in a booted management NCN running Shasta v1.3 or later, then reapply the static IP address and clear the DHCP address from HSM/KEA.
 
     Determine the MAC address in HSM for the DHCP address for the BMC, delete it from HSM, and restart KEA.
 
-1. Reboot or power cycle the target nodes.
+8. Reboot or power cycle the target nodes.
 
-1. After the BMC is reset to factory defaults, wait 300 seconds for BMC and Redfish initialization.
+9. After the BMC is reset to factory defaults, wait 300 seconds for BMC and Redfish initialization.
 
     ```bash
     ncn# sleep 300
     ```
 
-1. Add the default login and password to the BMC:
+10. Add the default login and password to the BMC:
 
     ```bash
     ncn# sh do_bmc_root_account.sh
