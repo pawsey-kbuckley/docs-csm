@@ -1,5 +1,14 @@
 # Set Gigabyte Node BMC to Factory Defaults
 
+There are cases when a Gigabyte node BMC must be reset to its factory default settings. This page describes when this reset is appropriate, and
+how to use management scripts and text files to do the reset.
+
+Set the BMC to the factory default settings in the following cases:
+
+- There are problems using the `ipmitool` command and Redfish does not respond.
+- There are problems using the `ipmitool` command and Redfish is running.
+- When BIOS or BMC flash procedures fail using Redfish.
+
 ## Prerequisites
 
 **Note**: This section refers to scripts that exist only in the PIT environment. If necessary, copy the LiveCD data from a different machine to get these scripts.
