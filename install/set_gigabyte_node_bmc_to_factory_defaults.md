@@ -9,7 +9,7 @@ Set the BMC to the factory default settings in the following cases:
 - There are problems using the `ipmitool` command and Redfish is running.
 - When BIOS or BMC flash procedures fail using Redfish.
 
-## Prerequisites
+## Procedure
 
 **Note**: This section refers to scripts that exist only in the PIT environment. If necessary, copy the LiveCD data from a different machine to get these scripts.
 
