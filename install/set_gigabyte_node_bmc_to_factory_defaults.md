@@ -103,7 +103,7 @@ Set the BMC to the factory default settings in the following cases:
 
     Determine the MAC address in HSM for the DHCP address for the BMC, delete it from HSM, and restart KEA.
 
-8. Reboot or power cycle the target nodes.
+1. Reboot or power cycle the target nodes.
 
 9. After the CMC is reset to factory defaults, wait 300 seconds for CMC and Redfish initialization, then add the default login/password to the CMC.
 
