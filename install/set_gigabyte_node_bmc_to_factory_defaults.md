@@ -13,7 +13,6 @@ Set the BMC to the factory default settings in the following cases:
 
 **Note**: This section refers to scripts that exist only in the PIT environment. If necessary, copy the LiveCD data from a different machine to get these scripts.
 
-
 - There are problems using the `ipmitool` command and Redfish does not respond
 - There are problems using the `ipmitool` command and Redfish is running
   - Run the `do_bmc_factory_default.sh` script
