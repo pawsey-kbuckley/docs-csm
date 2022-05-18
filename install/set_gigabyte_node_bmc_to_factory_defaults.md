@@ -115,5 +115,5 @@ Set the BMC to the factory default settings in the following cases:
 
     ```bash
     ncn-w001# sleep 300
-    ncn-w001# sh do_bmc_root_account.sh
+    ncn# sh do_bmc_root_account.sh
     ```
