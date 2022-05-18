@@ -105,7 +105,13 @@ Set the BMC to the factory default settings in the following cases:
 
 1. Reboot or power cycle the target nodes.
 
-9. After the CMC is reset to factory defaults, wait 300 seconds for CMC and Redfish initialization, then add the default login/password to the CMC.
+1. After the BMC is reset to factory defaults, wait 300 seconds for BMC and Redfish initialization.
+
+    ```bash
+    ncn# sleep 300
+    ```
+
+1. Add the default login and password to the BMC:
 
     ```bash
     ncn-w001# sleep 300
