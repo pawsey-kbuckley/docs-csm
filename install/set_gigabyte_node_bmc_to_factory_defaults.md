@@ -114,6 +114,5 @@ Set the BMC to the factory default settings in the following cases:
 1. Add the default login and password to the BMC:
 
     ```bash
-    ncn-w001# sleep 300
     ncn# sh do_bmc_root_account.sh
     ```
