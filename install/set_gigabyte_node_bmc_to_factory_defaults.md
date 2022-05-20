@@ -86,7 +86,7 @@ Set the BMC to the factory default settings in the following cases:
 
     If the BMC displays `Failover mode`:
 
-    ```bash
+    ```text
     [ BMC: 172.30.48.33 ]
     ==> Failover mode (X) <==
     ```
