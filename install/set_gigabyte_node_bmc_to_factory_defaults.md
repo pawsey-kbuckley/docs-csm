@@ -51,7 +51,7 @@ Set the BMC to the factory default settings in the following cases:
 
    - **Option 3:** Use the power control script:
 
-    ```bash
+        ```bash
     ncn-w001# sh do_bmc_power_control.sh raw 0x32 0x66
     ```
 
