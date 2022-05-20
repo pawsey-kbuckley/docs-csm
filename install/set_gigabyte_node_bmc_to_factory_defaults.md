@@ -45,7 +45,7 @@ Set the BMC to the factory default settings in the following cases:
 
    - Alternatively, use `ipmitool` to reset the BMC to factory defaults:
 
-    ```bash
+        ```bash
     ncn-w001# sh do_bmc_factory_default.sh
     ```
 
