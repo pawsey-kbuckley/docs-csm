@@ -41,7 +41,7 @@ Set the BMC to the factory default settings in the following cases:
 
     ```bash
         ncn# sh do_Redfish_BMC_Factory.sh
-    ```
+        ```
 
    - Alternatively, use `ipmitool` to reset the BMC to factory defaults:
 
