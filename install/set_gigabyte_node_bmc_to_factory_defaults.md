@@ -64,7 +64,7 @@ Set the BMC to the factory default settings in the following cases:
 4. Add the default login/password to the BMC.
 
     ```bash
-    ncn-w001# ncn-w001# sh do_bmc_root_account.sh
+    ncn# sh do_bmc_root_account.sh
     ```
 
 5. If BMC is version 12.84.01 or later, skip this step. Otherwise, add the default login/password to Redfish.
