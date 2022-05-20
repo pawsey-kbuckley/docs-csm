@@ -94,7 +94,7 @@ Set the BMC to the factory default settings in the following cases:
     Change the BMC back to manual mode.
 
     ```bash
-    ncn-w001# sh do_bmc_change_mode_to_manual.sh change
+    ncn# sh do_bmc_change_mode_to_manual.sh change
     ```
 
 7. If the BMC is in a booted management NCN running Shasta v1.3 or later, then reapply the static IP address and clear the DHCP address from HSM/KEA.
