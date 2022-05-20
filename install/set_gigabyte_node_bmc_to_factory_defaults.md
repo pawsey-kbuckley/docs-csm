@@ -18,7 +18,7 @@ Set the BMC to the factory default settings in the following cases:
 - The firmware packages are located in the HPE Cray EX HPC Firmware Pack (HFP) provided with the Shasta release.
   - The required scripts are located in `/var/www/fw/river/sh-svr-scripts`
 
-### Apply the BMC Factory Command
+### Apply the BMC factory command
 
 1. Create a `node.txt` file and add the target node information as shown:
 
