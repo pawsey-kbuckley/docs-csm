@@ -35,7 +35,9 @@ Set the BMC to the factory default settings in the following cases:
     10.254.1.11 x3000c0s9b0 ncn-w002
     ```
 
-2. Use Redfish to reset the BMC to factory default, the BMC is running 12.84.01 or later version, run:
+2. Use Redfish to reset the BMC to factory default.
+
+    - **Option 1:** If the BMC is running version `12.84.01` or later, then run:
 
     ```bash
     ncn-w001# sh do_Redfish_BMC_Factory.sh
