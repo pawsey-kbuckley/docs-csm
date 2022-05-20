@@ -78,7 +78,7 @@ Set the BMC to the factory default settings in the following cases:
     Run the script with the `read` option to check the BMC status:
 
     ```bash
-    ncn-w001# sh do_bmc_change_mode_to_manual.sh read
+    ncn# sh do_bmc_change_mode_to_manual.sh read
     ---------------------------------------------------
     [ BMC: 172.30.48.33 ]
     => Manual mode (O)
