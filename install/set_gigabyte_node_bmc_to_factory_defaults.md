@@ -14,10 +14,12 @@ Set the BMC to the factory default settings in the following cases:
 **This section refers to scripts that exist only in the PIT environment.** If necessary, copy the LiveCD data from a different machine to get these scripts.
 
 **Note**: When BIOS or BMC flash procedures fail using Redfish:
+
 - Run the `do_bmc_factory_default.sh` script
 - Run `ipmitool -I lanplus -U admin -P password -H BMC_or_CMC_IP mc reset cold` and flash it again after 5 minutes (300 seconds).
 
 If booted from the PIT node:
+
 - The firmware packages are located in the HPE Cray EX HPC Firmware Pack (HFP) provided with the Shasta release.
 - The required scripts are located in `/var/www/fw/river/sh-svr-scripts`
 
