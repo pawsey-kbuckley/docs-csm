@@ -58,7 +58,7 @@ Set the BMC to the factory default settings in the following cases:
 3. Wait five minutes (300 seconds) for the BMC and Redfish to initialize.
 
     ```bash
-    ncn-w001# sleep 300
+    ncn# sleep 300
     ```
 
 4. Add the default login/password to the BMC.
