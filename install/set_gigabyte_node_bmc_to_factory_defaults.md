@@ -70,7 +70,7 @@ Set the BMC to the factory default settings in the following cases:
 5. If BMC is version 12.84.01 or later, skip this step. Otherwise, add the default login/password to Redfish.
 
     ```bash
-    ncn-w001# sh do_Redfish_credentials.sh
+    ncn# sh do_Redfish_credentials.sh
     ```
 
 6. Make sure the BMC is not in failover mode. Run the script with the `read` option to check the BMC status:
