@@ -52,7 +52,7 @@ Set the BMC to the factory default settings in the following cases:
    - **Option 3:** Use the power control script:
 
         ```bash
-    ncn-w001# sh do_bmc_power_control.sh raw 0x32 0x66
+        ncn# sh do_bmc_power_control.sh raw 0x32 0x66
     ```
 
 3. Wait five minutes (300 seconds) for the BMC and Redfish to initialize.
