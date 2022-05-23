@@ -7,12 +7,12 @@ directory which contains important customizations for various products.
 
 ### Topics:
    1. [Background](#background)
-   1. [Create and Initialize Site-Init Directory](#create-and-initialize-site-init-directory)
+   1. [Create and Initialize `Site Init` Directory](#create-and-initialize-site-init-directory)
    1. [Create Baseline System Customizations](#create-baseline-system-customizations)
    1. [Generate Sealed Secrets](#generate-sealed-secrets)
-   1. [Version Control Site-Init Files](#version-control-site-init-files)
+   1. [Version Control `Site Init` Files](#version-control-site-init-files)
       1. [Push to a Remote Repository](#push-to-a-remote-repository)
-   1. [Patch cloud-init with the CA](#patch-cloud-init-with-the-ca)
+   1. [Patch `cloud-init` with the CA](#patch-cloud-init-with-the-ca)
    1. [Customer-Specific Customizations](#customer-specific-customizations)
 
 ## Details
@@ -55,7 +55,7 @@ installation-centric artifacts such as:
     later in this document, do not run them at this time.
 
 1.  The `yq` tool used in the following procedures is available under
-`/mnt/pitdata/prep/site-init/utils/bin` once the SHASTA-CFG repo has been
+`/mnt/pitdata/prep/site-init/utils/bin` once the `SHASTA-CFG` repo has been
 cloned
 
     ```bash
@@ -123,7 +123,7 @@ with system-specific customizations.
     linux# yq read /mnt/pitdata/prep/site-init/customizations.yaml 'spec.kubernetes.sealed_secrets.cray_reds_credentials.generate.data[0].args.value' | jq
     linux# yq read /mnt/pitdata/prep/site-init/customizations.yaml 'spec.kubernetes.sealed_secrets.cray_reds_credentials.generate.data[1].args.value' | jq
     ```
-    > NOTE: For vault_redfish_defaults, the only entry used is '{"Cray": {"Username": "root", "Password": "XXXX"}'
+    > NOTE: For `vault_redfish_defaults`, the only entry used is '{"Cray": {"Username": "root", "Password": "XXXX"}'
     > Make sure it is specified as shown, with the 'Cray' key. This key is not
     > used in any of the other credential specifications. Make sure Username and
     > Password entries are correct.
@@ -380,7 +380,7 @@ with system-specific customizations.
            ```
 
 1.  If you need to resolve outside hostnames, you will need to configure
-    forwarding in the cray-dns-unbound service. For example, if you are using a
+    forwarding in the `cray-dns-unbound` service. For example, if you are using a
     hostname and not an IP address for the upstream LDAP server in step 4 above, you
     will need to be able to resolve that hostname.
 
@@ -489,7 +489,7 @@ encrypted.
 
 
 <a name="version-control-site-init-files"></a>
-### 5. Version Control Site-Init Files
+### 5. Version Control `Site-Init` Files
 
 Setup `/mnt/pitdata/prep/site-init` as a Git repository in order to manage the
 baseline configuration during initial system installation.
@@ -511,7 +511,7 @@ baseline configuration during initial system installation.
     linux# echo "certs/" >> .gitignore
     ```
 
-1.  Stage site-init files to be committed:
+1.  Stage `site-init` files to be committed:
 
     ```bash
     linux# git add -A
@@ -545,7 +545,7 @@ off-cluster. Add a remote repository and push the baseline configuration on
 [Bootstrap LiveCD Remote ISO](bootstrap_livecd_remote_iso.md)).
 Skip this if using a USB LiveCD. These steps are done elsewhere in that procedure.
 
-Using `csi` on a generated site-init directory...
+Using `csi` on a generated `site-init` directory...
 
 1. Patch the CA certificate from the shasta-cfg:
    ```bash
