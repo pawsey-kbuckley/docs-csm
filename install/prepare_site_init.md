@@ -1,4 +1,4 @@
-# Prepare Site Init
+# Prepare `Site Init`
 
 These procedures guide administrators through setting up the `site-init`
 directory which contains important customizations for various products.
@@ -23,13 +23,10 @@ directory which contains important customizations for various products.
 The `shasta-cfg` directory included in CSM includes relatively static,
 installation-centric artifacts such as:
 
-*   Cluster-wide network configuration settings required by Helm Charts
-    deployed by product stream Loftsman Manifests
-*   [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets)
-*   Sealed Secret Generate Blocks -- a form of plain-text input that renders
-    to a Sealed Secret
-*   Helm Chart value overrides that are merged into Loftsman Manifests by
-    product stream installers
+* Cluster-wide network configuration settings required by Helm Charts deployed by product stream Loftsman Manifests
+* [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets)
+* Sealed Secret Generate Blocks -- a form of plain-text input that renders to a Sealed Secret
+* Helm Chart value overrides that are merged into Loftsman Manifests by product stream installers
 
 <a name="create-and-initialize-site-init-directory"></a>
 ### 2. Create and Initialize Site-Init Directory
@@ -66,6 +63,7 @@ cloned
     ```
 
 <a name="create-baseline-system-customizations"></a>
+
 ### 3. Create Baseline System Customizations
 
 The following steps update `/mnt/pitdata/prep/site-init/customizations.yaml`
@@ -96,13 +94,21 @@ with system-specific customizations.
     * `spec.kubernetes.sealed_secrets.cray_meds_credentials`
     * `spec.kubernetes.sealed_secrets.cray_hms_rts_credentials`
 
-    The 'cray_reds_credentials' are used by the River Endpoint Discovery Service (REDS) for River components.
-    The 'cray_meds_credentials' are used by the Mountain Endpoint Discovery Service (MEDS) for the liquid-cooled components in an Olympus (Mountain) cabinet.
-    The 'cray_hms_rts_credentials' are used by the Redfish Translation Service (RTS) for any hardware components which are not managed by Redfish, such as a ServerTech PDU in a River Cabinet.
+    The `cray_reds_credentials` are used by the HMS Discovery CronJob and the River Endpoint Discovery Service (REDS) for River components. This sealed secret contains the following:
+      * Default Redfish `root` user credentials for air-cooled Node and Router BMCs.
+      * Default SNMP credentials configured on `leaf-bmc` switches. This needs to match the SNMP credentials currently configured on `leaf-bmc` switches or the credentials will be configured later in the install. The SNMP username, authentication password,
+        and the privacy password need to be provided.
 
-    Edit `customizations.yaml` to replace the 'Username' and `Password` references in the file so that the values match the existing settings of your system hardware components.
+    The `cray_meds_credentials` are used by the Mountain Endpoint Discovery Service (MEDS) for the liquid-cooled components in an Olympus (Mountain) cabinet.
+      * The `root` user password needs to match what is currently configured on the CECs for the liquid-cooled cabinets in the system.
+
+    The `cray_hms_rts_credentials` are used by the Redfish Translation Service (RTS) for any hardware components which are not managed by Redfish, such as a ServerTech PDU in a River Cabinet.
+      * The ServerTech PDU credentials need to match the credentials for the `admn` user that is currently configured on the PDUs.
+      * The RTS `root` user credentials are unique to RTS and used only within the service mesh; these can be set as desired.
+
+    Edit `customizations.yaml` to replace the `Username` and `Password` references in the file so that the values match the **existing settings** of your system hardware components.
     See the `Decrypt Sealed Secrets for Review` section of [Manage Sealed Secrets](../operations/security_and_authentication/Manage_Sealed_Secrets.md#decrypt-sealed-secrets-for-review)
-    if you need to examine credentials from prior installs.
+    if needing to examine credentials from prior installs.
 
 1. Review the changes that you made:
 
@@ -133,8 +139,8 @@ with system-specific customizations.
     linux# yq read /mnt/pitdata/prep/site-init/customizations.yaml 'spec.kubernetes.sealed_secrets.cray_hms_rts_credentials.generate.data[1].args.value' | jq
     ```
 
-1.  To customize the PKI Certificate Authority (CA) used by the platform, see
-    [Certificate_authority](../background/certificate_authority.md).
+1. To customize the PKI Certificate Authority (CA) used by the platform, see
+    [Certificate Authority](../background/certificate_authority.md).
 
     > **`IMPORTANT`** The CA may not be modified after install.
 
@@ -200,7 +206,7 @@ with system-specific customizations.
 
                 Expected output would include a line similar to this:
 
-                ```
+                ```text
                 emailAddress=dcops@hpe.com,CN=Data Center,OU=HPC/MCS,O=HPE,ST=WI,C=US
                 ```
 
@@ -225,7 +231,7 @@ with system-specific customizations.
 
             Expected output looks like:
 
-            ```
+            ```text
             -----BEGIN CERTIFICATE-----
             MIIDvTCCAqWgAwIBAgIUYxrG/PrMcmIzDuJ+U1Gh8hpsU8cwDQYJKoZIhvcNAQEL
             BQAwbjELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAldJMQwwCgYDVQQKDANIUEUxEDAO
@@ -317,7 +323,7 @@ with system-specific customizations.
     1.  Configure the `ldapSearchBase` and `localRoleAssignments` settings for
         the `cray-keycloak-users-localize` chart in `customizations.yaml`.
 
-        There may be one or more groups in LDAP for admins and one or more for users.
+        There may be one or more groups in LDAP for administrators and one or more for users.
         Each admin group needs to be assigned to role `admin` and set to both `shasta` and `cray` clients in Keycloak.
         Each user group needs to be assigned to role `user` and set to both `shasta` and `cray` clients in Keycloak.
 
@@ -446,7 +452,7 @@ encrypted.
 
     Expected output looks similar to:
 
-    ```
+    ```text
     Creating Sealed Secret keycloak-certs
     Generating type static_b64...
     Creating Sealed Secret keycloak-master-admin-auth
