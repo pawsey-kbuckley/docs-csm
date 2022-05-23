@@ -73,7 +73,9 @@ If booted from the PIT node:
     ncn# sh do_bmc_root_account.sh
     ```
 
-5. If BMC is version 12.84.01 or later, skip this step. Otherwise, add the default login/password to Redfish.
+5. Add the default login and password to Redfish.
+
+    **IMPORTANT:** If the BMC is version `12.84.01` or later, then **skip this step**. 
 
     ```bash
     ncn# sh do_Redfish_credentials.sh
