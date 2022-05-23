@@ -41,7 +41,7 @@ Replace an HPE Cray EX liquid-cooled compute blade.
 
 1. Replace the blade hardware.
 
-   Review the *Remove a Compute Blade Using the Lift* procedure in *HPE Cray EX Hardware Replacement Procedures H-6173* for detailed instructions (https://internal.support.hpe.com/).
+   Review the *Remove a Compute Blade Using the Lift* procedure in *HPE Cray EX Hardware Replacement Procedures H-6173* for detailed instructions.
 
    **CAUTION**: Always power off the chassis slot or device before removal. The best practice is to unlatch
    and unseat the device while the coolant hoses are still connected, then disconnect the coolant hoses.

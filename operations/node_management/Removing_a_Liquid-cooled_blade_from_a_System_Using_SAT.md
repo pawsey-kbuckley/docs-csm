@@ -3,6 +3,7 @@
 This procedure will remove a liquid-cooled blade from an HPE Cray EX system.
 
 ## Prerequisites
+
 - The Cray command line interface \(CLI\) tool is initialized and configured on the system.
 
 - Knowledge of whether DVS is operating over the Node Management Network (NMN) or the High Speed Network (HSN).
@@ -43,7 +44,7 @@ This procedure will remove a liquid-cooled blade from an HPE Cray EX system.
 
    This command will also save the MAC addresses, IP addresses, and node xnames from the blade to a JSON document. The document is stored in a file with the following naming convention:
 
-   ```
+   ```screen
    ethernet-interface-mappings-<blade_xname>-<current_year>-<current_month>-<current_day>.json
    ```
 

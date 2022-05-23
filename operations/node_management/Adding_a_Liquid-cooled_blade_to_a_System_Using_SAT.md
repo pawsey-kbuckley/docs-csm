@@ -3,6 +3,7 @@
 This procedure will add a liquid-cooled blade to an HPE Cray EX system.
 
 ## Prerequisites
+
 - The Cray command line interface \(CLI\) tool is initialized and configured on the system.
 
 - Knowledge of whether DVS is operating over the Node Management Network (NMN) or the High Speed Network (HSN).
@@ -53,6 +54,7 @@ This procedure will add a liquid-cooled blade to an HPE Cray EX system.
    ```
 
 #### Check firmware
+
 1. Verify that the correct firmware versions for node BIOS, node controller (nC), NIC mezzanine card (NMC), GPUs, and so on.
 
     1. Review [FAS Admin Procedures](../firmware/FAS_Admin_Procedures.md) to perform a dry run using FAS to verify firmware versions.
@@ -70,7 +72,8 @@ There should be a cray-cps pod (the broker), three cray-cps-etcd pods and their 
    ```
 
    Example output:
-   ```
+
+   ```screen
    services   cray-cps-75cffc4b94-j9qzf    2/2  Running   0   42h 10.40.0.57  ncn-w001
    services   cray-cps-cm-pm-g6tjx         5/5  Running   21  41h 10.42.0.77  ncn-w003
    services   cray-cps-cm-pm-kss5k         5/5  Running   21  41h 10.39.0.80  ncn-w002
@@ -80,14 +83,15 @@ There should be a cray-cps pod (the broker), three cray-cps-etcd pods and their 
    services   cray-cps-wait-for-etcd-jb95m 0/1  Completed
    ```
 
-1. SSH to each worker node running CPS/DVS, and run `dmesg -T` to ensure that there are no recurring `"DVS: merge_one" ` error messages as shown. The error messages indicate that DVS is detecting an IP address change for one of the client nodes.
+1. SSH to each worker node running CPS/DVS, and run `dmesg -T` to ensure that there are no recurring `"DVS: merge_one"` error messages as shown. The error messages indicate that DVS is detecting an IP address change for one of the client nodes.
 
    ```bash
    ncn-m001# dmesg -T | grep "DVS: merge_one"
    ```
 
    Example output:
-   ```
+
+   ```bash
    [Tue Jul 21 13:09:54 2020] DVS: merge_one#351: New node map entry does not match the existing entry
    [Tue Jul 21 13:09:54 2020] DVS: merge_one#353:   nid: 8 -> 8
    [Tue Jul 21 13:09:54 2020] DVS: merge_one#355:   name: 'x3000c0s19b1n0' -> 'x3000c0s19b1n0'
@@ -102,7 +106,8 @@ There should be a cray-cps pod (the broker), three cray-cps-etcd pods and their 
    ```
 
    Example output:
-   ```
+
+   ```screen
    /var/lib/cps-local/0dbb42538e05485de6f433a28c19e200 on /var/opt/cray/gpu/nvidia-squashfs-21.3 type dvs (ro,relatime,blksize=524288,statsfile=/sys/kernel/debug/dvs/mounts/1/stats,attrcache_timeout=14400,cache,nodatasync,noclosesync,retry,failover,userenv,noclusterfs,killprocess,noatomic,nodeferopens,no_distribute_create_ops,no_ro_cache,loadbalance,maxnodes=1,nnodes=6,nomagic,hash_on_nid,hash=modulo,nodefile=/sys/kernel/debug/dvs/mounts/1/nodenames,nodename=x3000c0s6b0n0:x3000c0s5b0n0:x3000c0s4b0n0:x3000c0s9b0n0:x3000c0s8b0n0:x3000c0s7b0n0)
    ```
 
@@ -121,12 +126,14 @@ There should be a cray-cps pod (the broker), three cray-cps-etcd pods and their 
 1. Check for duplicate IP address entries in the Hardware State Management Database (HSM). Duplicate entries will cause DNS operations to fail.
 
    1. Verify each node hostname resolves to one IP address.
+
       ```bash
       ncn-m001# nslookup x1005c3s0b0n0
       ```
 
       Example output with one IP address resolving:
-      ```
+
+      ```screen
       Server:         10.92.100.225
       Address:        10.92.100.225#53
 
@@ -135,11 +142,13 @@ There should be a cray-cps pod (the broker), three cray-cps-etcd pods and their 
       ```
 
    1. Reload the KEA configuration.
+
       ```bash
       ncn-m001# curl -s -k -H "Authorization: Bearer ${TOKEN}" -X POST -H "Content-Type: application/json" -d '{ "command": "config-reload",  "service": [ "dhcp4" ] }' https://api-gw-service-nmn.local/apis/dhcp-kea |jq
       ```
 
       If there are no duplicate IP addresses within HSM the following response is expected:
+
       ```json
       [
         {
@@ -150,7 +159,8 @@ There should be a cray-cps pod (the broker), three cray-cps-etcd pods and their 
       ```
 
       If there is a duplicate IP address an error message similar to the message below. This message indicates a duplicate IP address (10.100.0.105) in the HSM:
-      ```
+
+      ```screen
       [{'result': 1, 'text': "Config reload failed: configuration error using file '/usr/local/kea/cray-dhcp-kea-dhcp4.conf': failed to add new host using the HW address '00:40:a6:83:50:a4 and DUID '(null)' to the IPv4 subnet id '0' for the address 10.100.0.105: There's already a reservation for this address"}]
       ```
 
@@ -161,6 +171,7 @@ There should be a cray-cps pod (the broker), three cray-cps-etcd pods and their 
    ```
 
    Example output with no active DHCP leases:
+
    ```json
    [
      {
@@ -182,6 +193,7 @@ There should be a cray-cps pod (the broker), three cray-cps-etcd pods and their 
       ```
 
       Example output for an IP address that is associated with two MAC addresses:
+
       ```json
       [
         {
@@ -228,7 +240,8 @@ There should be a cray-cps pod (the broker), three cray-cps-etcd pods and their 
    ```
 
    Example output:
-   ```
+
+   ```screen
    The authenticity of host 'x1005c3s0b0n0 (10.100.0.105)' can't be established.
    ECDSA key fingerprint is SHA256:wttHXF5CaJcQGPTIq4zWp0whx3JTwT/tpx1dJNyyXkA.
    Are you sure you want to continue connecting (yes/no/[fingerprint])? yes

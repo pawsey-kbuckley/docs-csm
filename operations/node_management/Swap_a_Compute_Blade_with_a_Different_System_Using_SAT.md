@@ -49,7 +49,7 @@ Swap an HPE Cray EX liquid-cooled compute blade between two systems.
 
    This command will save the MAC addresses, IP addresses, and node xnames from the blade to a JSON document. The document is stored in a file with the following naming convention:
 
-   ```
+   ```screen
    ethernet-interface-mappings-<blade_xname>-<current_year>-<current_month>-<current_day>.json
    ```
 
