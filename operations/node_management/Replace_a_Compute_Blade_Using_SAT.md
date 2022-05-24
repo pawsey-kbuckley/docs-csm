@@ -4,6 +4,8 @@ Replace an HPE Cray EX liquid-cooled compute blade.
 
 ## Prerequisites
 
+- The Cray command line interface \(CLI\) tool is initialized and configured on the system. See [Configure the Cray Command Line Interface](../configure_cray_cli.md).
+
 - The Slingshot fabric must be configured with the desired topology.
 
 - The System Layout Service (SLS) must have the desired HSN configuration.
@@ -21,7 +23,10 @@ Replace an HPE Cray EX liquid-cooled compute blade.
 
 1. Verify that the workload manager (WLM) is not using the affected nodes.
 
-1. Use the `sat bootsys` command to shut down the nodes on the target blade (in this example, `x9000c3s0`.) Specify the appropriate component xname and BOS
+1. Shut down the nodes on the target blade.
+
+   Use the `sat bootsys` command to shut down the nodes on the target blade (in this example, `x9000c3s0`).
+   Specify the appropriate component name (xname) and BOS
    template for the node type in the following command.
 
    ```bash
@@ -31,7 +36,9 @@ Replace an HPE Cray EX liquid-cooled compute blade.
 
 ### Use SAT to remove the blade from hardware management
 
-1. Use the `sat swap` command to power off the slot and delete the blade's ethernet interfaces and Redfish endpoints from HSM.
+1. Power off the slot and delete blade information from HSM.
+
+   Use the `sat swap` command to power off the slot and delete the blade's ethernet interfaces and Redfish endpoints from HSM.
 
    ```bash
    ncn# sat swap blade -a disable x9000c3s0
@@ -61,7 +68,7 @@ Replace an HPE Cray EX liquid-cooled compute blade.
 1. Optional: If necessary, update the firmware. Review the [Firmware Action Service (FAS)](../firmware/FAS_Admin_Procedures.md) documentation.
 
    ```bash
-   ncn-m001# cray fas actions create CUSTOM_DEVICE_PARAMETERS.json
+   ncn# cray fas actions create CUSTOM_DEVICE_PARAMETERS.json
    ```
 
 1. Update the System Layout Service (SLS).
@@ -69,19 +76,21 @@ Replace an HPE Cray EX liquid-cooled compute blade.
    1. Dump the existing SLS configuration.
 
       ```bash
-      ncn-m001# cray sls networks describe HSN --format=json > existingHSN.json
+      ncn# cray sls networks describe HSN --format=json > existingHSN.json
       ```
 
-   1. Copy `existingHSN.json` to a `newHSN.json`, edit `newHSN.json` with the changes, then run
+   1. Copy `existingHSN.json` to `newHSN.json`, edit `newHSN.json` with the changes, then run the following command:
 
       ```bash
-      ncn-m001# curl -s -k -H "Authorization: Bearer ${TOKEN}" https://API_SYSTEM/apis/sls/v1/networks/HSN \
-      -X PUT -d @newHSN.json
+      ncn# curl -s -k -H "Authorization: Bearer ${TOKEN}" https://API_SYSTEM/apis/sls/v1/networks/HSN \
+                -X PUT -d @newHSN.json
       ```
 
 1. Reload DVS on NCNs.
 
-1. Use `sat bootsys` to power on and boot the nodes. Specify the appropriate BOS template for the node type.
+1. Power on and boot the nodes.
+
+   Use `sat bootsys` to power on and boot the nodes. Specify the appropriate BOS template for the node type.
 
     ```bash
     ncn# BOS_TEMPLATE=cos-2.0.30-slurm-healthy-compute

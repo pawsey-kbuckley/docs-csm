@@ -4,7 +4,7 @@ This procedure will remove a liquid-cooled blade from an HPE Cray EX system.
 
 ## Prerequisites
 
-- The Cray command line interface \(CLI\) tool is initialized and configured on the system.
+- The Cray command line interface \(CLI\) tool is initialized and configured on the system. See [Configure the Cray Command Line Interface](../configure_cray_cli.md).
 
 - Knowledge of whether DVS is operating over the Node Management Network (NMN) or the High Speed Network (HSN).
 
@@ -24,9 +24,14 @@ This procedure will remove a liquid-cooled blade from an HPE Cray EX system.
 
 ### Prepare the system blade for removal
 
-1. Using the work load manager (WLM), drain running jobs from the affected nodes on the blade. Refer to the vendor documentation for the WLM for more information.
+1. Using the work load manager (WLM), drain running jobs from the affected nodes on the blade.
 
-1. Use the `sat bootsys` command to shut down the nodes on the target blade (in this example, `x9000c3s0`.) Specify the appropriate component xname and BOS
+   Refer to the vendor documentation for the WLM for more information.
+
+1. Shut down the nodes on the target blade.
+
+   Use the `sat bootsys` command to shut down the nodes on the target blade (in this example, `x9000c3s0`).
+   Specify the appropriate component name (xname) and BOS
    template for the node type in the following command.
 
    ```bash
@@ -36,19 +41,22 @@ This procedure will remove a liquid-cooled blade from an HPE Cray EX system.
 
 ### Use SAT to remove the blade from hardware management
 
-1. Use the `sat swap` command to power off the slot and delete the blade's ethernet interfaces and Redfish endpoints from HSM.
+1. Power off the slot and delete blade information from HSM.
+
+   Use the `sat swap` command to power off the slot and delete the blade's ethernet interfaces and Redfish endpoints from HSM.
 
    ```bash
    ncn# sat swap blade -a disable x9000c3s0
    ```
 
-   This command will also save the MAC addresses, IP addresses, and node xnames from the blade to a JSON document. The document is stored in a file with the following naming convention:
+   This command will also save the MAC addresses, IP addresses, and node component names (xnames) from the blade to a JSON document.
+   The document is stored in a file with the following naming convention:
 
-   ```screen
+   ```text
    ethernet-interface-mappings-<blade_xname>-<current_year>-<current_month>-<current_day>.json
    ```
 
-   If a mapping file already exists with the above name, a numeric suffix will be appended to the file name in front of the `.json` extension.
+   If a mapping file already exists with the above name, then a numeric suffix will be appended to the file name in front of the `.json` extension.
 
 ### Remove the blade
 
