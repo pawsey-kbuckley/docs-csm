@@ -29,7 +29,7 @@ If booted from the PIT node:
 
     Example `node.txt` file with two nodes:
 
-    ```screen
+    ```text
     10.254.1.11 x3000c0s9b0 ncn-w002
     10.254.1.21 x3000c0s27b0 uan01
     ```
