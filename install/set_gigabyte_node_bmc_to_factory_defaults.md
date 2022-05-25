@@ -44,7 +44,7 @@ If booted from the PIT node:
 
     - **Option 1:** If the BMC is running version `12.84.01` or later, then run:
 
-    ```bash
+        ```bash
         ncn# sh do_Redfish_BMC_Factory.sh
         ```
 
