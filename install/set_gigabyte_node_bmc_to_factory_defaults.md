@@ -99,7 +99,7 @@ If booted from the PIT node:
     ==> Failover mode (X) <==
     ```
 
-    Change the BMC back to manual mode.
+    If the BMC is in failover mode, then change the BMC back to manual mode:
 
     ```bash
     ncn# sh do_bmc_change_mode_to_manual.sh change
