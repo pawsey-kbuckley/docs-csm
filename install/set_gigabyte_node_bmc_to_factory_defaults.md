@@ -48,7 +48,7 @@ If booted from the PIT node:
         ncn# sh do_Redfish_BMC_Factory.sh
         ```
 
-   - Alternatively, use `ipmitool` to reset the BMC to factory defaults:
+   - **Option 2:** Use `ipmitool` to reset the BMC to factory defaults:
 
         ```bash
     ncn-w001# sh do_bmc_factory_default.sh
