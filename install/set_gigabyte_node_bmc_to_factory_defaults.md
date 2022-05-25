@@ -67,7 +67,7 @@ If booted from the PIT node:
     ncn# sleep 300
     ```
 
-4. Add the default login/password to the BMC.
+4. Add the default login and password to the BMC.
 
     ```bash
     ncn# sh do_bmc_root_account.sh
