@@ -48,18 +48,19 @@ If booted from the PIT node:
         ncn# sh do_Redfish_BMC_Factory.sh
         ```
 
-   - **Option 2:** Use `ipmitool` to reset the BMC to factory defaults:
+    - **Option 2:** Use `ipmitool` to reset the BMC to factory defaults:
 
         ```bash
-    ncn-w001# sh do_bmc_factory_default.sh
+        ncn-w001# sh do_bmc_factory_default.sh
         ```
 
-   - **Option 3:** Use the power control script:
+    - **Option 3:** Use the power control script:
 
         ```bash
         ncn# sh do_bmc_power_control.sh raw 0x32 0x66
         ```
-       (raw 0x32 0x66 are Gigabyte/AMI vendor specific IPMI commands to reset to factory defaults.)
+
+        (raw 0x32 0x66 are Gigabyte/AMI vendor specific IPMI commands to reset to factory defaults.)
 
 3. Wait five minutes (300 seconds) for the BMC and Redfish to initialize.
 
