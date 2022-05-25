@@ -92,7 +92,7 @@ If booted from the PIT node:
     => Manual mode (O)
     ```
 
-    If the BMC displays `Failover mode`:
+    The BMC is in failover mode if the previous command includes output similar to the following:
 
     ```text
     [ BMC: 172.30.48.33 ]
