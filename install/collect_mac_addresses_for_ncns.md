@@ -56,7 +56,7 @@ The previous step updated `ncn_metadata.csv` with the BMC MAC addresses, so seve
    Before deleting the incorrectly generated configurations, consider
    making a backup of them, in case they need to be examined at a later time.
 
-   > **`WARNING`** Ensure that the `SYSTEM_NAME` environment variable is correctly set.
+   > **WARNING** Ensure that the `SYSTEM_NAME` environment variable is correctly set.
 
    ```bash
    pit# export SYSTEM_NAME=eniac

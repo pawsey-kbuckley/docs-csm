@@ -56,9 +56,9 @@ installation-centric artifacts such as:
     linux# /mnt/pitdata/${CSM_RELEASE}/shasta-cfg/meta/init.sh /mnt/pitdata/prep/site-init
     ```
 
-    **`IMPORTANT`** The output of this command states that customizations.yaml should be reviewed and updated before
-    running the secrets-reencrypt.sh and secrets-seed-customizations.sh scripts. These two scripts will be run
-    later in this document, do not run them at this time.
+    **IMPORTANT** The output of this command states that `customizations.yaml` should be reviewed and updated before
+    running the `secrets-reencrypt.sh` and `secrets-seed-customizations.sh` scripts. These two scripts will be run
+    later in this document; do not run them at this time.
 
 1. The `yq` tool used in the following procedures is available under
 `/mnt/pitdata/prep/site-init/utils/bin` once the `SHASTA-CFG` repo has been
@@ -131,18 +131,18 @@ with system-specific customizations.
     linux# yq read /mnt/pitdata/prep/site-init/customizations.yaml 'spec.kubernetes.sealed_secrets.cray_reds_credentials.generate.data[1].args.value' | jq
     ```
 
-    > NOTE: For `vault_redfish_defaults`, the only entry used is '{"Cray": {"Username": "root", "Password": "XXXX"}'
+    > NOTE: For `vault_redfish_defaults`, the only entry used is `'{"Cray": {"Username": "root", "Password": "XXXX"}'`
     > Make sure it is specified as shown, with the 'Cray' key. This key is not
     > used in any of the other credential specifications. Make sure Username and
     > Password entries are correct.
 
-    Validate MEDS credentials (used by the MEDS service, targeting Redfish BMC endpoints). Make sure Username and Password entries are correct.
+    Validate MEDS credentials (used by the MEDS service, targeting Redfish BMC endpoints). Make sure `Username` and `Password` entries are correct.
 
     ```bash
     linux# yq read /mnt/pitdata/prep/site-init/customizations.yaml 'spec.kubernetes.sealed_secrets.cray_meds_credentials.generate.data[0].args.value' | jq
     ```
 
-    Validate RTS credentials (used by the Redfish Translation Service, targeting River Redfish BMC endpoints and PDU controllers). Make sure Username and Password entries are correct.
+    Validate RTS credentials (used by the Redfish Translation Service, targeting River Redfish BMC endpoints and PDU controllers). Make sure `Username` and `Password` entries are correct.
 
     ```bash
     linux# yq read /mnt/pitdata/prep/site-init/customizations.yaml 'spec.kubernetes.sealed_secrets.cray_hms_rts_credentials.generate.data[0].args.value' | jq
@@ -154,15 +154,15 @@ with system-specific customizations.
 
     > **`IMPORTANT`** The CA may not be modified after install.
 
-1. To federate Keycloak with an upstream LDAP:
+1. Federate Keycloak with an upstream LDAP server.
 
-    1. Set environment variables for LDAP and PORT
+    1. Set environment variables for `LDAP` and `PORT`.
 
        In the example below, the LDAP server has the hostname `dcldap2.us.cray.com` and is using the port 636.
 
        ```bash
        linux# export LDAP=dcldap2.us.cray.com
-       linux# export PORT=636
+       linux# PORT=636
        ```
 
     1. If LDAP requires TLS (recommended), update the `cray-keycloak` sealed
@@ -173,7 +173,7 @@ with system-specific customizations.
        packaged with CSM to create a JKS file that includes a PEM-encoded
        CA certificate to verify the LDAP host(s) as follows:
 
-        This step builds an example that will create (or update) `cert.jks` with the PEM-encoded CA certificate for an LDAP host and then prepares `certs.jks.b64` which will be injected into customizations.yaml.
+        This step builds an example that will create (or update) `cert.jks` with the PEM-encoded CA certificate for an LDAP host and then prepares `certs.jks.b64` which will be injected into `customizations.yaml`.
 
         1. Load the `openjdk` container image:
 
@@ -517,7 +517,7 @@ baseline configuration during initial system installation.
     linux# git init .
     ```
 
-1. (Optional) **`WARNING`** If production system or operational security is a
+1. (Optional) **WARNING** If production system or operational security is a
     concern, do NOT store the sealed secret private key in Git; instead,
     **store the sealed secret key outside of Git in a secure offline system**.
     To ensure these sensitive keys are not accidentally committed, configure
@@ -561,7 +561,7 @@ off-cluster. Add a remote repository and push the baseline configuration on
 [Bootstrap LiveCD Remote ISO](bootstrap_livecd_remote_iso.md)).
 Skip this if using a USB LiveCD. These steps are done elsewhere in that procedure.
 
-Using `csi` on a generated `site-init` directory...
+Using `csi` on a generated `site-init` directory:
 
 1. Patch the CA certificate from the `shasta-cfg`:
 
@@ -572,13 +572,13 @@ Using `csi` on a generated `site-init` directory...
    --sealed-secret-key-file /var/www/ephemeral/prep/site-init/certs/sealed_secrets.key
    ```
 
-1. To assure it picks up the new meta-data:
+1. Ensure that it picks up the new metadata:
 
    ```bash
    pit# systemctl restart basecamp
    ```
 
-1. Unmount the shim from earlier if one was used.
+1. Unmount the shim from earlier, if one was used.
 
    ```bash
    pit# umount -v /mnt/pitdata
