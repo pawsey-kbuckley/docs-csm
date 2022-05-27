@@ -33,12 +33,80 @@ Swap an HPE Cray EX liquid-cooled compute blade between two systems.
 
 1. Using the work load manager (WLM), drain running jobs from the affected nodes on the blade. Refer to the vendor documentation for the WLM for more information.
 
-1. Use the `sat bootsys` command to shut down the nodes on the target blade (in this example, `x9000c3s0`.) Specify the appropriate component xname and BOS
-   template for the node type in the following command.
+<a name="determine-bos-session-template"></a>
+
+1. Determine which Boot Orchestration Service \(BOS\) templates to use to shut down nodes on the target blade.
+
+   There will be separate session templates for UANs and computes nodes.
+
+   1. List all the session templates.
+
+      If it is unclear what session template is in use, proceed to the next substep.
+
+      ```bash
+      ncn# cray bos sessiontemplate list
+      ```
+
+   1. Find the node xnames with `sat status`. In this example, the target blade is in slot `x9000c3s0`.
+
+      ```bash
+      ncn# sat status --filter 'xname=x9000c3s0*'
+      ```
+
+      Example output:
+
+      ```text
+      +---------------+------+----------+-------+------+---------+------+-------+-------------+----------+
+      | xname         | Type | NID      | State | Flag | Enabled | Arch | Class | Role        | Net      |
+      +---------------+------+----------+-------+------+---------+------+-------+-------------+----------+
+      | x9000c3s0b1n0 | Node | 1        | Off   | OK   | True    | X86  | River | Compute     | Sling    |
+      | x9000c3s0b2n0 | Node | 2        | Off   | OK   | True    | X86  | River | Compute     | Sling    |
+      | x9000c3s0b3n0 | Node | 3        | Off   | OK   | True    | X86  | River | Compute     | Sling    |
+      | x9000c3s0b4n0 | Node | 4        | Off   | OK   | True    | X86  | River | Compute     | Sling    |
+      +---------------+------+----------+-------+------+---------+------+-------+-------------+----------+
+      ```
+
+   1. Find the `bos_session` value for each node via the Configuration Framework Service (CFS).
+
+      ```bash
+      ncn# cray cfs components describe x9000c3s0b1n0 | grep bos_session
+      ```
+
+      Example output:
+
+      ```text
+      bos_session = "e98cdc5d-3f2d-4fc8-a6e4-1d301d37f52f"
+      ```
+
+   1. Find the required `templateUuid` value with BOS.
+
+      ```bash
+      ncn# cray bos session describe BOS_SESSION | grep templateUuid
+      ```
+
+      Example output:
+
+      ```text
+      templateUuid = "compute-nid1-4-sessiontemplate"
+      ```
+
+   1. Determine the list of xnames associated with the desired boot session template.
+
+      ```bash
+      ncn# cray bos sessiontemplate describe SESSION_TEMPLATE_NAME | grep node_list
+      ```
+
+      Example output:
+
+      ```text
+      node_list = [ "x9000c3s0b1n0", "x9000c3s0b2n0", "x9000c3s0b3n0", "x9000c3s0b4n0",]
+      ```
+
+1. Use the `sat bootsys` command to shut down the nodes on the target blade (in this example, `x9000c3s0`.) Specify the appropriate component name (xname), and BOS templates determined in the previous step in a comma-separated list.
 
    ```bash
    ncn# BOS_TEMPLATE=cos-2.0.30-slurm-healthy-compute
-   ncn# sat bootsys shutdown --stage bos-operations --bos-limit x9000c3s0 --recursive --bos-templates $BOS_TEMPLATE
+   ncn# sat bootsys shutdown --stage bos-operations --bos-limit x9000c3s0 --recursive --bos-templates BOS_TEMPLATES
    ```
 
 ### Source: Use SAT to remove the blade from hardware management
@@ -82,9 +150,9 @@ Swap an HPE Cray EX liquid-cooled compute blade between two systems.
 
 1. Shut down the nodes on the target blade.
 
-   Use the `sat bootsys` command to shut down the nodes on the target blade (in this example, `x1005c0s3`).
-   Specify the appropriate component name (xname) and BOS
-   template for the node type in the following command.
+   Use the `sat bootsys` command to shut down the nodes on the target blade (in this example, `x1005c0s3`). Specify the appropriate component name (xname) and BOS template for the node type in the following command.
+
+   The appropriate BOS session template should be determined using the same procedure as was used to [determine the appropriate BOS session templates on the source system](#determine-bos-session-template).
 
    ```bash
    ncn# BOS_TEMPLATE=cos-2.0.30-slurm-healthy-compute
@@ -195,7 +263,7 @@ one on `ncn-w002` and one on another worker node.
    [Tue Jul 21 13:09:54 2020] DVS: merge_one#358:   Ignoring.
    ```
 
-1. Make sure the Configuration Framework Service (CFS) finished successfully. Review *HPE Cray EX DVS Administration Guide 1.4.1 S-8004*.
+1. Make sure the Configuration Framework Service (CFS) finished successfully. Review *HPE Cray Operating System Administration Guide: CSM on HPE Cray EX Systems (S-8024)*.
 
 1. SSH to the node and check each DVS mount.
 
@@ -254,8 +322,10 @@ one on `ncn-w002` and one on another worker node.
 
 1. Use the following example `curl` command to check for active DHCP leases. If there are zero DHCP leases, then there is a configuration error.
 
+   In this example, an authentication token for the API gateway is stored in the `TOKEN` shell variable. See [Retrieve an Authentication Token](../security_and_authentication/Retrieve_an_Authentication_Token.md) for more information.
+
    ```bash
-   ncn# curl -H "Authorization: Bearer ${MY_TOKEN}" -X POST -H "Content-Type: application/json" \
+   ncn# curl -H "Authorization: Bearer ${TOKEN}" -X POST -H "Content-Type: application/json" \
        -d '{ "command": "lease4-get-all", "service": [ "dhcp4" ] }' https://api-gw-service-nmn.local/apis/dhcp-kea | jq
    ```
 

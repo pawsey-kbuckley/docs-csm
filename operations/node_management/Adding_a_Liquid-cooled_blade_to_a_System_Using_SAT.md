@@ -48,13 +48,80 @@ This procedure will add a liquid-cooled blade to an HPE Cray EX system.
 
 ### Power on and boot the nodes
 
+1. Determine which Boot Orchestration Service \(BOS\) templates to use to shut down nodes on the target blade.
+
+   There will be separate session templates for UANs and computes nodes.
+
+   1. List all the session templates.
+
+      If it is unclear what session template is in use, proceed to the next substep.
+
+      ```bash
+      ncn# cray bos sessiontemplate list
+      ```
+
+   1. Find the node xnames with `sat status`. In this example, the target blade is in slot `x9000c3s0`.
+
+      ```bash
+      ncn# sat status --filter 'xname=x9000c3s0*'
+      ```
+
+      Example output:
+
+      ```text
+      +---------------+------+----------+-------+------+---------+------+-------+-------------+----------+
+      | xname         | Type | NID      | State | Flag | Enabled | Arch | Class | Role        | Net      |
+      +---------------+------+----------+-------+------+---------+------+-------+-------------+----------+
+      | x9000c3s0b1n0 | Node | 1        | Off   | OK   | True    | X86  | River | Compute     | Sling    |
+      | x9000c3s0b2n0 | Node | 2        | Off   | OK   | True    | X86  | River | Compute     | Sling    |
+      | x9000c3s0b3n0 | Node | 3        | Off   | OK   | True    | X86  | River | Compute     | Sling    |
+      | x9000c3s0b4n0 | Node | 4        | Off   | OK   | True    | X86  | River | Compute     | Sling    |
+      +---------------+------+----------+-------+------+---------+------+-------+-------------+----------+
+      ```
+
+   1. Find the `bos_session` value for each node via the Configuration Framework Service (CFS).
+
+      ```bash
+      ncn# cray cfs components describe x9000c3s0b1n0 | grep bos_session
+      ```
+
+      Example output:
+
+      ```text
+      bos_session = "e98cdc5d-3f2d-4fc8-a6e4-1d301d37f52f"
+      ```
+
+   1. Find the required `templateUuid` value with BOS.
+
+      ```bash
+      ncn# cray bos session describe BOS_SESSION | grep templateUuid
+      ```
+
+      Example output:
+
+      ```text
+      templateUuid = "compute-nid1-4-sessiontemplate"
+      ```
+
+   1. Determine the list of xnames associated with the desired boot session template.
+
+      ```bash
+      ncn# cray bos sessiontemplate describe SESSION_TEMPLATE_NAME | grep node_list
+      ```
+
+      Example output:
+
+      ```text
+      node_list = [ "x9000c3s0b1n0", "x9000c3s0b2n0", "x9000c3s0b3n0", "x9000c3s0b4n0",]
+      ```
+
 1. Power on and boot the nodes.
 
-   Use `sat bootsys` to power on and boot the nodes. Specify the appropriate BOS template for the node type.
+   Use `sat bootsys` to power on and boot the nodes. Specify the appropriate component name (xname), and BOS templates determined in the previous step in a comma-separated list.
 
    ```bash
    ncn# BOS_TEMPLATE=cos-2.0.30-slurm-healthy-compute
-   ncn# sat bootsys boot --stage bos-operations --bos-limit <SLOT_XNAME> --recursive --bos-templates $BOS_TEMPLATE
+   ncn# sat bootsys boot --stage bos-operations --bos-limit x9000c3s0 --recursive --bos-templates BOS_TEMPLATES
    ```
 
 #### Check firmware
@@ -136,7 +203,7 @@ There should be a `cray-cps` pod (the broker), three `cray-cps-etcd` pods and th
    1. Verify each node hostname resolves to one IP address.
 
       ```bash
-      ncn# nslookup x1005c3s0b0n0
+      ncn# nslookup x9000c3s0b0n1
       ```
 
       Example output with one IP address resolving:
@@ -145,7 +212,7 @@ There should be a `cray-cps` pod (the broker), three `cray-cps-etcd` pods and th
       Server:         10.92.100.225
       Address:        10.92.100.225#53
 
-      Name:   x1005c3s0b0n0
+      Name:   x9000c3s0b0n1
       Address: 10.100.0.26
       ```
 
@@ -214,7 +281,7 @@ There should be a `cray-cps` pod (the broker), three `cray-cps-etcd` pods and th
           "MACAddress": "00:40:a6:83:50:a4",
           "IPAddress": "10.100.0.105",
           "LastUpdate": "2021-08-24T20:24:23.214023Z",
-          "ComponentID": "x1005c3s0b0n0",
+          "ComponentID": "x9000c3s0b0n1",
           "Type": "Node"
         },
         {
@@ -223,7 +290,7 @@ There should be a `cray-cps` pod (the broker), three `cray-cps-etcd` pods and th
           "MACAddress": "00:40:a6:83:63:9a",
           "IPAddress": "10.100.0.105",
           "LastUpdate": "2021-08-27T19:15:53.697459Z",
-          "ComponentID": "x1005c3s0b0n0",
+          "ComponentID": "x9000c3s0b0n1",
           "Type": "Node"
         }
       ]
@@ -253,13 +320,13 @@ There should be a `cray-cps` pod (the broker), three `cray-cps-etcd` pods and th
 1. Verify the ability to connect using SSH.
 
    ```bash
-   ncn# ssh x1005c3s0b0n0
+   ncn# ssh x9000c3s0b0n1
    ```
 
    Example output:
 
    ```text
-   The authenticity of host 'x1005c3s0b0n0 (10.100.0.105)' can't be established.
+   The authenticity of host 'x9000c3s0b0n1 (10.100.0.105)' can't be established.
    ECDSA key fingerprint is SHA256:wttHXF5CaJcQGPTIq4zWp0whx3JTwT/tpx1dJNyyXkA.
    Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
    Warning: Permanently added 'x1005c3s0b0n0' (ECDSA) to the list of known hosts.

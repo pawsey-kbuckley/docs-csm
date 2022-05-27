@@ -28,15 +28,81 @@ This procedure will remove a liquid-cooled blade from an HPE Cray EX system.
 
    Refer to the vendor documentation for the WLM for more information.
 
+1. Determine which Boot Orchestration Service \(BOS\) templates to use to shut down nodes on the target blade.
+
+   There will be separate session templates for UANs and computes nodes.
+
+   1. List all the session templates.
+
+      If it is unclear what session template is in use, proceed to the next substep.
+
+      ```bash
+      ncn# cray bos sessiontemplate list
+      ```
+
+   1. Find the node xnames with `sat status`. In this example, the target blade is in slot `x9000c3s0`.
+
+      ```bash
+      ncn# sat status --filter 'xname=x9000c3s0*'
+      ```
+
+      Example output:
+
+      ```text
+      +---------------+------+----------+-------+------+---------+------+-------+-------------+----------+
+      | xname         | Type | NID      | State | Flag | Enabled | Arch | Class | Role        | Net      |
+      +---------------+------+----------+-------+------+---------+------+-------+-------------+----------+
+      | x9000c3s0b1n0 | Node | 1        | Off   | OK   | True    | X86  | River | Compute     | Sling    |
+      | x9000c3s0b2n0 | Node | 2        | Off   | OK   | True    | X86  | River | Compute     | Sling    |
+      | x9000c3s0b3n0 | Node | 3        | Off   | OK   | True    | X86  | River | Compute     | Sling    |
+      | x9000c3s0b4n0 | Node | 4        | Off   | OK   | True    | X86  | River | Compute     | Sling    |
+      +---------------+------+----------+-------+------+---------+------+-------+-------------+----------+
+      ```
+
+   1. Find the `bos_session` value for each node via the Configuration Framework Service (CFS).
+
+      ```bash
+      ncn# cray cfs components describe x9000c3s0b1n0 | grep bos_session
+      ```
+
+      Example output:
+
+      ```text
+      bos_session = "e98cdc5d-3f2d-4fc8-a6e4-1d301d37f52f"
+      ```
+
+   1. Find the required `templateUuid` value with BOS.
+
+      ```bash
+      ncn# cray bos session describe BOS_SESSION | grep templateUuid
+      ```
+
+      Example output:
+
+      ```text
+      templateUuid = "compute-nid1-4-sessiontemplate"
+      ```
+
+   1. Determine the list of xnames associated with the desired boot session template.
+
+      ```bash
+      ncn# cray bos sessiontemplate describe SESSION_TEMPLATE_NAME | grep node_list
+      ```
+
+      Example output:
+
+      ```text
+      node_list = [ "x9000c3s0b1n0", "x9000c3s0b2n0", "x9000c3s0b3n0", "x9000c3s0b4n0",]
+      ```
+
 1. Shut down the nodes on the target blade.
 
-   Use the `sat bootsys` command to shut down the nodes on the target blade (in this example, `x9000c3s0`).
-   Specify the appropriate component name (xname) and BOS
-   template for the node type in the following command.
+   Use the `sat bootsys` command to shut down the nodes on the target blade.
+   Specify the appropriate component name (xname), and BOS templates determined in the previous step in a comma-separated list.
 
    ```bash
    ncn# BOS_TEMPLATE=cos-2.0.30-slurm-healthy-compute
-   ncn# sat bootsys shutdown --stage bos-operations --bos-limit x9000c3s0 --recursive --bos-templates $BOS_TEMPLATE
+   ncn# sat bootsys shutdown --stage bos-operations --bos-limit x9000c3s0 --recursive --bos-templates BOS_TEMPLATES
    ```
 
 ### Use SAT to remove the blade from hardware management
