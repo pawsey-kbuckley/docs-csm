@@ -36,7 +36,7 @@ If booted from the PIT node:
 
    Example `node.txt` file with one node:
 
-    ```screen
+    ```text
     10.254.1.11 x3000c0s9b0 ncn-w002
     ```
 
