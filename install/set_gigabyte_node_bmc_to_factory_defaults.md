@@ -16,7 +16,7 @@ Set the BMC to the factory default settings in the following cases:
 **Note**: When BIOS or BMC flash procedures fail using Redfish:
 
 - Run the `do_bmc_factory_default.sh` script
-- Run `ipmitool -I lanplus -U admin -P password -H BMC_or_CMC_IP mc reset cold` and flash it again after 5 minutes (300 seconds).
+- Run `ipmitool -I lanplus -U admin -P password -H BMC_or_CMC_IP mc reset cold` and flash it again after five minutes.
 
 If booted from the PIT node:
 
