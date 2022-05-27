@@ -51,7 +51,7 @@ If booted from the PIT node:
     - **Option 2:** Use `ipmitool` to reset the BMC to factory defaults:
 
         ```bash
-        ncn-w001# sh do_bmc_factory_default.sh
+        ncn# sh do_bmc_factory_default.sh
         ```
 
     - **Option 3:** Use the power control script:
