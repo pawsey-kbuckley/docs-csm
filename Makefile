@@ -32,6 +32,8 @@ SOURCE_NAME ?= ${NAME}
 BUILD_DIR ?= $(PWD)/dist/rpmbuild
 SOURCE_PATH := ${BUILD_DIR}/SOURCES/${SOURCE_NAME}-${VERSION}.tar.bz2
 
+MDFILES := $(shell find . -name "*.md" -type f)
+
 all:
 	@echo "Tell me what to make"
 	@echo ""
@@ -48,6 +50,8 @@ all:
 	@echo " jekyll-replace-md-links  Modify dot-md files"
 	@echo ""
 	@echo " jekyll-show-brace_percent_str  Identify files to edit"
+	@echo ""
+	@echo " jekyll-protect-code-blocks     Modify dot-md files"
 	@echo ""
 
 was_all: prepare rpm
@@ -91,4 +95,10 @@ jekyll-replace-md-links:
 
 jekyll-show-brace_percent_str:
 	@./scripts/identify_quotable_strings.sh
+
+jekyll-protect-code-blocks:
+	for f in $(MDFILES) ; do \
+	awk -f ./scripts/add_raw_sentinals.awk $$f > $$f.tmp ; \
+	mv $$f.tmp $$f ; \
+	done
 
