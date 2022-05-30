@@ -43,6 +43,8 @@ all:
 	@echo " jekyll-clean   Removes Jekyll-created files"
 	@echo "                Restores modified dot-md files"
 	@echo ""
+	@echo " jekyll-add-def-header    Modify dot-md files"
+	@echo ""
 
 was_all: prepare rpm
 
@@ -76,4 +78,7 @@ jekyll-cmds:
 jekyll-clean:
 	@rm -fr _site .jekyll-cache
 	find . -name \*.md -print | xargs git restore
+
+jekyll-add-def-header:
+	./scripts/add_layout_header_default.sh
 
