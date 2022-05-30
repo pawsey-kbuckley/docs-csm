@@ -2,3 +2,6 @@
 999*
 .vscode
 .idea
+# Ignore directories created by Jekyll
+.jekyll-cache/
+_site/
