@@ -45,6 +45,8 @@ all:
 	@echo ""
 	@echo " jekyll-add-def-header    Modify dot-md files"
 	@echo ""
+	@echo " jekyll-replace-md-links  Modify dot-md files"
+	@echo ""
 
 was_all: prepare rpm
 
@@ -81,4 +83,7 @@ jekyll-clean:
 
 jekyll-add-def-header:
 	./scripts/add_layout_header_default.sh
+
+jekyll-replace-md-links:
+	for f in $(MDFILES) ; do ./scripts/replace_page_links.sh $$f ; ./scripts/replace_anchor_links.sh $$f ; done
 
