@@ -12,13 +12,13 @@ BEGIN{
   }
   next ;
 }
-/^##/{
+/^## /{
   if(incode==1){
     print "Reached new section2, or lower, with unclosed block"
     incode = 0 ;
   }
 }
-/^[123456789]\./{
+/^[123456789]\. /{
   if(incode==1){
     print "Reached new item with unclosed block"
     incode = 0 ;
