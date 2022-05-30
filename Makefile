@@ -47,6 +47,8 @@ all:
 	@echo ""
 	@echo " jekyll-replace-md-links  Modify dot-md files"
 	@echo ""
+	@echo " jekyll-show-brace_percent_str  Identify files to edit"
+	@echo ""
 
 was_all: prepare rpm
 
@@ -86,4 +88,7 @@ jekyll-add-def-header:
 
 jekyll-replace-md-links:
 	for f in $(MDFILES) ; do ./scripts/replace_page_links.sh $$f ; ./scripts/replace_anchor_links.sh $$f ; done
+
+jekyll-show-brace_percent_str:
+	@./scripts/identify_quotable_strings.sh
 
