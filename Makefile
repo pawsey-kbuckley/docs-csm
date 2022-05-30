@@ -32,7 +32,19 @@ SOURCE_NAME ?= ${NAME}
 BUILD_DIR ?= $(PWD)/dist/rpmbuild
 SOURCE_PATH := ${BUILD_DIR}/SOURCES/${SOURCE_NAME}-${VERSION}.tar.bz2
 
-all: prepare rpm
+all:
+	@echo "Tell me what to make"
+	@echo ""
+	@echo "Cray default does: make prepare; make rpm"
+	@echo ""
+	@echo "For Jekyll rendering, we have:"
+	@echo ""
+	@echo " jekyll-cmds    Echo Jekyll commands"
+	@echo " jekyll-clean   Removes Jekyll-created files"
+	@echo "                Restores modified dot-md files"
+	@echo ""
+
+was_all: prepare rpm
 
 rpm: prepare rpm_package_source rpm_build_source rpm_build
 
@@ -52,3 +64,16 @@ rpm_build:
 
 rpm_latest: 
 	cp $(wildcard $(BUILD_DIR)/RPMS/noarch/docs-csm-$(VERSION)-*.noarch.rpm) "$(BUILD_DIR)/RPMS/noarch/docs-csm-latest.noarch.rpm" 
+
+jekyll-cmds:
+	@echo "You'll probably want one of"
+	@echo ""
+	@echo 'PATH=/path/to/.gem/ruby/x.y.z/bin:$$PATH jekyll build'
+	@echo ""
+	@echo 'PATH=/path/to/.gem/ruby/x.y.z/bin:$$PATH jekyll serve'
+	@echo ""
+
+jekyll-clean:
+	@rm -fr _site .jekyll-cache
+	find . -name \*.md -print | xargs git restore
+
