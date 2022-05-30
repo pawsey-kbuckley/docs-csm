@@ -70,7 +70,7 @@ This example unpacks the the csm-1.0.0 tarball under /root and lists the Helm ch
 These unpacked files can be safely removed after the customizations are deployed through `loftsman ship` in the examples below.
 
 ```bash
-## This example assumes the csm-1.0.0 release is currently running and the csm-1.0.0.tar.gz has been pulled down under /root
+ncn# # This example assumes the csm-1.0.0 release is currently running and the csm-1.0.0.tar.gz has been pulled down under /root
 ncn# cd /root
 ncn# tar -xzf csm-1.0.0.tar.gz
 ncn# rm csm-1.0.0.tar.gz
