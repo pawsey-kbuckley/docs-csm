@@ -120,12 +120,12 @@ These unpacked files can be safely removed after the customizations are deployed
 (`ncn#`)
 
 ```bash
-## This example assumes the csm-1.0.0 release is currently running and the csm-1.0.0.tar.gz has been pulled down under /root
-cd /root
-tar -xzf csm-1.0.0.tar.gz
-rm csm-1.0.0.tar.gz
-PATH_TO_RELEASE=/root/csm-1.0.0
-ls $PATH_TO_RELEASE/helm
+ncn# # This example assumes the csm-1.0.0 release is currently running and the csm-1.0.0.tar.gz has been pulled down under /root
+ncn# cd /root
+ncn# tar -xzf csm-1.0.0.tar.gz
+ncn# rm csm-1.0.0.tar.gz
+ncn# PATH_TO_RELEASE=/root/csm-1.0.0
+ncn# ls $PATH_TO_RELEASE/helm
 ```
 
 ### Prometheus pod is `OOMKilled` or CPU throttled

@@ -668,9 +668,11 @@ To resolve this `SyncFailed` case, restarting the Postgres operator by deleting 
 
 1. (`ncn-mw#`) Delete the pod.
 
-    ```bash
-    kubectl delete pod -l app.kubernetes.io/name=postgres-operator -n services
-    ```
+```bash
+ncn-mw# kubectl delete pod "${POSTGRESQL}-0" "${POSTGRESQL}-1" "${POSTGRESQL}-2" -n ${NAMESPACE}
+ncn-mw# kubectl delete pods -n services -lapp.kubernetes.io/name=postgres-operator
+ncn-mw# while [ $(kubectl get postgresql ${POSTGRESQL} -n ${NAMESPACE} -o json | jq -r '.status.PostgresClusterStatus') != "Running" ]; do echo "waiting for ${POSTGRESQL} to start running"; sleep 2; done
+```
 
 1. (`ncn-mw#`) Wait for the `postgres-operator` to restart.
 
