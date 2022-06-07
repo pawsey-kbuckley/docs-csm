@@ -1,3 +1,45 @@
+# Cray System Management (CSM) - README
+
+This file is on a branch that allows for rendering of the content
+with the Jekyll rendering tools.
+
+There's no "fancy" style being applied at present but it does act
+as a useful check to make sure that the way the Markdown is being
+written doesn't preculde rendering with Jekyll.
+
+Along with
+
+* Adding some tooling files and scripts
+* Adding some headers to all of the Markdown files
+* Rewriting links so that they refer to the rendered dot-html
+  files and not the dot-md source files
+
+the main issue so far has been seen to be the way that some date
+command format strings, which use curly brace plus percent as a
+delimiter, within code blocks, require, for rendering with Jekyll,
+the code block to be qualified with a raw/endraw pair.
+
+Typically, one would do
+
+* `make  jekyll-add-def-header`
+* `make  jekyll-replace-md-links`
+* `make  jekyll-show-brace_percent_str`
+
+At this point, one can either protect the identified code blocks
+by hand, or simply protect everyone, with a 
+
+* `make jekyll-protect-code-blocks`
+
+after which running a `jekyll build` or `jekyll serve` should
+complete.
+
+The branch can be returned to a clean state, after any Jekyll
+work, by running
+
+* `make jekyll-clean`
+
+## The original content of the "main" branch README follows:
+
 # Cray System Management Documentation
 
 ## Scope and Audience
