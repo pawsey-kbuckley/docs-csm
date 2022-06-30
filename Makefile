@@ -91,13 +91,13 @@ jekyll-add-def-header:
 	./scripts/add_layout_header_default.sh
 
 jekyll-replace-md-links:
-	for f in $(MDFILES) ; do ./scripts/replace_page_links.sh $$f ; ./scripts/replace_anchor_links.sh $$f ; done
+	@for f in $(MDFILES) ; do ./scripts/replace_page_links.sh $$f ; ./scripts/replace_anchor_links.sh $$f ; done
 
 jekyll-show-brace_percent_str:
 	@./scripts/identify_quotable_strings.sh
 
 jekyll-protect-code-blocks:
-	for f in $(MDFILES) ; do \
+	@for f in $(MDFILES) ; do \
 	awk -f ./scripts/add_raw_sentinals.awk $$f > $$f.tmp ; \
 	mv $$f.tmp $$f ; \
 	done
