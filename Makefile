@@ -32,7 +32,7 @@ SOURCE_NAME ?= ${NAME}
 BUILD_DIR ?= $(PWD)/dist/rpmbuild
 SOURCE_PATH := ${BUILD_DIR}/SOURCES/${SOURCE_NAME}-${VERSION}.tar.bz2
 
-MDFILES := $(shell find . -name "*.md" -type f)
+MDFILES := $(shell find [a-zA-Z]* -name "*.md" -type f)
 
 all:
 	@echo "Tell me what to make"
