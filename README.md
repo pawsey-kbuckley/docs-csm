@@ -1,10 +1,3 @@
----
-layout: default
----
-
----
-layout: default
----
 
 # Cray System Management (CSM) - README
 
