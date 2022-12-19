@@ -23,38 +23,22 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 
-set -euo pipefail
-
 function deployNLS() {
     BUILDDIR="/tmp/build"
     mkdir -p "$BUILDDIR"
     kubectl get secrets -n loftsman site-init -o jsonpath='{.data.customizations\.yaml}' | base64 -d > "${BUILDDIR}/customizations.yaml"
-    manifestgen -i "${CSM_ARTI_DIR}/manifests/platform.yaml" -c "${BUILDDIR}/customizations.yaml" -o "${BUILDDIR}/platform.yaml"
-    charts="$(yq r /tmp/build/platform.yaml 'spec.charts[*].name')"
+    manifestgen -i "${CSM_ARTI_DIR}/manifests/platform.yaml" -c "${BUILDDIR}/customizations.yaml" -o "${BUILDDIR}/iufnls.yaml"
+    charts="$(yq r $BUILDDIR/iufnls.yaml 'spec.charts[*].name')"
     for chart in $charts; do
-        if [[ $chart != "cray-nls" ]] && [[ $chart != "cray-opa" ]] && [[ $chart != "cray-drydock" ]] && [[ $chart != "cray-oauth2-proxies" ]]; then 
-            yq d -i /tmp/build/platform.yaml "spec.charts.(name==$chart)"
+        if [[ $chart != "cray-iuf" ]] && [[ $chart != "cray-nls" ]]; then 
+            yq d -i ${BUILDDIR}/iufnls.yaml "spec.charts.(name==$chart)"
         fi
     done
 
-    yq d -i /tmp/build/platform.yaml "spec.sources"
+    yq w -i ${BUILDDIR}/iufnls.yaml "metadata.name" "iufnls"
+    yq d -i ${BUILDDIR}/iufnls.yaml "spec.sources"
 
-    loftsman ship --charts-path "${CSM_ARTI_DIR}/helm/" --manifest-path /tmp/build/platform.yaml
-}
-
-function patchKeycloak() {
-    ARGO_URL=$(kubectl get VirtualService/cray-argo -n argo -o json | jq -r '.spec.hosts[0]')
-    KC_CLIENT_ID=$(kubectl get secrets keycloak-master-admin-auth -o jsonpath='{.data.client-id}' -n services | base64 -d)
-    KC_USERNAME=$(kubectl get secrets keycloak-master-admin-auth -o jsonpath='{.data.user}' -n services | base64 -d)
-    KC_PASSWORD=$(kubectl get secrets keycloak-master-admin-auth -o jsonpath='{.data.password}' -n services | base64 -d)
-
-    export ARGO_URL="${ARGO_URL}"
-    export KC_CLIENT_ID="${KC_CLIENT_ID}"
-    export KC_USERNAME="${KC_USERNAME}"
-    export KC_PASSWORD="${KC_PASSWORD}"
-    
-    python /usr/share/doc/csm/upgrade/scripts/upgrade/util/nls-keycloak-configure.py
+    loftsman ship --charts-path "${CSM_ARTI_DIR}/helm/" --manifest-path ${BUILDDIR}/iufnls.yaml
 }
 
 deployNLS
-patchKeycloak

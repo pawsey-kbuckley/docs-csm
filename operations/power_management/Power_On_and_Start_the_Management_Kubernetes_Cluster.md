@@ -27,8 +27,13 @@ Power on and start management services on the HPE Cray EX management Kubernetes 
     ```bash
     USERNAME=root
     read -r -s -p "ncn-m001 BMC ${USERNAME} password: " IPMI_PASSWORD
+    ```
+
+    > In the example commands below, replace `NCN_M001_BMC_HOSTNAME` with the hostname of the BMC of `ncn-m001`.
+
+    ```bash
     export IPMI_PASSWORD
-    ipmitool -I lanplus -U "${USERNAME}" -E -H NCN_M001_BMC_HOSTNAME sol activate
+    ipmitool -I lanplus -U $USERNAME -E -H NCN_M001_BMC_HOSTNAME sol activate
     ```
 
 1. (`remote#`) In a separate window, power on the master node 1 \(`ncn-m001`\) chassis using IPMI tool.
@@ -38,8 +43,13 @@ Power on and start management services on the HPE Cray EX management Kubernetes 
     ```bash
     USERNAME=root
     read -r -s -p "ncn-m001 BMC ${USERNAME} password: " IPMI_PASSWORD
+    ```
+
+    > In the example commands below, replace `NCN_M001_BMC_HOSTNAME` with the hostname of the BMC of `ncn-m001`.
+
+    ```bash
     export IPMI_PASSWORD
-    ipmitool -I lanplus -U "${USERNAME}" -E -H NCN_M001_BMC_HOSTNAME chassis power on
+    ipmitool -I lanplus -U $USERNAME -E -H NCN_M001_BMC_HOSTNAME chassis power on
     ```
 
     Wait for the login prompt.
@@ -57,6 +67,8 @@ Power on and start management services on the HPE Cray EX management Kubernetes 
         ```
 
     1. (`remote#`) Power cycle again to boot into `ncn-m001`.
+
+         > In the example commands below, replace `NCN_M001_BMC_HOSTNAME` with the hostname of the BMC of `ncn-m001`.
 
         ```bash
         ipmitool -I lanplus -U "${USERNAME}" -E -H NCN_M001_BMC_HOSTNAME chassis power on
@@ -77,6 +89,10 @@ Power on and start management services on the HPE Cray EX management Kubernetes 
 ### Power on all other management NCNs
 
 1. (`ncn-m001#`) Power on and boot other management NCNs.
+
+    Note that the default timeout for booting each group of NCNs is 300 seconds, which is reasonable for smaller systems.
+    To avoid needing to re-run the command in the event of a timeout, increase the timeout using the `--ncn-boot-timeout` option.
+    See `sat bootsys boot --help` for additional information and options.
 
    ```bash
    sat bootsys boot --stage ncn-power
@@ -203,16 +219,19 @@ Verify that the Lustre file system is available from the management cluster.
     2021-08-04 17:28:21,945 - INFO - sat.cli.bootsys.ceph - Ceph is not healthy: The following fatal Ceph health warnings were found: POOL_NO_REDUNDANCY
     ```
 
-    The particular Ceph health warning may vary. In this example, it is `POOL_NO_REDUNDANCY`. See
-    [Manage Ceph Services](../utility_storage/Manage_Ceph_Services.md) for Ceph troubleshooting
-    steps, which may include restarting Ceph services as described below for convenience.
+    The particular Ceph health warning may vary. In this example, it is `POOL_NO_REDUNDANCY`.
 
-    Verify that the Ceph services started.
+    If the warning is `PG_NOT_DEEP_SCRUBBED`, this alert should clear once Ceph deep scrubs of PGs
+    have completed. The time to complete this operation depends on the number of outstanding deep
+    scrub operations and the load on the Ceph cluster. See [Ceph Deep
+    Scrubs](../utility_storage/Ceph_Deep_Scrubs.md) for more information on deep scrubs. This alert
+    is more likely to occur if the system is powered off for an extended duration.
 
-    * If the Ceph services did not start, then see [Manage Ceph Services](../utility_storage/Manage_Ceph_Services.md)
-      for instruction on starting Ceph services.
+    See [Manage Ceph Services](../utility_storage/Manage_Ceph_Services.md) for Ceph troubleshooting
+    steps, which may include restarting Ceph services.
 
-    Once Ceph is healthy, repeat the `sat bootsys boot` to finish starting the Kubernetes cluster.
+    Once Ceph is healthy, repeat the `sat bootsys boot --stage platform-services` command to finish
+    starting the Kubernetes cluster.
 
 1. (`ncn-m001#`) Check the space available on the Ceph cluster.
 
@@ -246,6 +265,17 @@ Verify that the Lustre file system is available from the management cluster.
 1. If `%USED` for any pool approaches 80% used, then resolve the space issue.
 
     To resolve the space issue, see [Troubleshoot Ceph OSDs Reporting Full](../utility_storage/Troubleshoot_Ceph_OSDs_Reporting_Full.md).
+
+1. (`ncn-m001#`) Manually mount S3 filesystems on the master and worker nodes. The workers try
+    to mount several S3 filesystems when they are booted, but Ceph is not available yet at that
+    time, so this workaround is required. The `boot-images` S3 filesystem is required for CPS pods
+    to successfully start on workers.
+
+    ```bash
+    pdsh -w ncn-m00[1-3],ncn-w00[1-3] "awk '{ if (\$3 == \"fuse.s3fs\") { print \$2; }}' /etc/fstab | xargs -I {} -n 1 sh -c \"mountpoint {} || mount {}\""
+    ```
+
+    Ensure all masters and workers are included in the host list for this `pdsh` command.
 
 1. (`ncn-m001#`) Monitor the status of the management cluster and which pods are restarting (as indicated by either a `Running` or `Completed` state).
 
@@ -304,6 +334,13 @@ Verify that the Lustre file system is available from the management cluster.
 
     ```bash
     kubectl rollout restart -n spire deployment spire-jwks
+    ```
+
+1. (`ncn-m001#`) Rejoin Kubernetes to the worker and master NCNs, to avoid issues with Spire tokens.
+
+    ```bash
+    kubectl rollout restart -n spire daemonset request-ncn-join-token
+    kubectl rollout status -n spire daemonset request-ncn-join-token
     ```
 
 1. (`ncn-m001#`) Check if any pods are in `CrashLoopBackOff` state because of errors connecting to Vault.
@@ -430,9 +467,9 @@ Verify that the Lustre file system is available from the management cluster.
 
     See [Check the Health and Balance of etcd Clusters](../kubernetes/Check_the_Health_and_Balance_of_etcd_Clusters.md).
 
-### Check `cronjob`s
+### Check `cronjobs`
 
-1. (`ncn-m001#`) Display all the Kubernetes `cronjob`s.
+1. (`ncn-m001#`) Display all the Kubernetes `cronjobs`.
 
     ```bash
     kubectl get cronjobs.batch -A
@@ -456,9 +493,9 @@ Verify that the Lustre file system is available from the management cluster.
     **Attention:** It is normal for the `hms-discovery` service to be suspended at this point if liquid-cooled cabinets have not been powered on. The `hms-discovery` service is
     un-suspended during the liquid-cooled cabinet power on procedure. Do not recreate the `hms-discovery` `cronjob` at this point.
 
-1. Check for `cronjob`s that have a `LAST SCHEDULE` time that is older than the `SCHEDULE` time. These `cronjob`s must be restarted.
+1. Check for `cronjobs` that have a `LAST SCHEDULE` time that is older than the `SCHEDULE` time. These `cronjobs` must be restarted.
 
-1. (`ncn-m001#`) Check any `cronjob`s in question for errors.
+1. (`ncn-m001#`) Check any `cronjobs` in question for errors.
 
     ```bash
     kubectl describe cronjobs.batch -n kube-system kube-etcdbackup | egrep -A 15 Events
@@ -476,7 +513,7 @@ Verify that the Lustre file system is available from the management cluster.
                                                                               or check clock skew
     ```
 
-1. (`ncn-m001#`) For any `cronjob`s producing errors, get the YAML representation of the `cronjob` and edit the YAML file:
+1. (`ncn-m001#`) For any `cronjobs` producing errors, get the YAML representation of the `cronjob` and edit the YAML file:
 
     ```bash
     cd ~/k8s
@@ -521,24 +558,19 @@ Verify that the Lustre file system is available from the management cluster.
 1. (`ncn-m001#`) Use the `sat` command to check for management NCNs in an `Off` state.
 
     ```bash
-    sat status --filter role=management
+    sat status --filter role=management --filter enabled=true --filter=state=off \
+        --fields xname,aliases,state,flag,role,subrole
     ```
 
     Example output:
 
     ```text
-    +----------------+------+----------+-------+---------+---------+------+-------+-------------+----------+
-    | xname          | Type | NID      | State | Flag    | Enabled | Arch | Class | Role        | Net Type |
-    +----------------+------+----------+-------+---------+---------+------+-------+-------------+----------+
-    | x3000c0s10b0n0 | Node | 100001   | On    | OK      | True    | X86  | River | Management  | Sling    |
-    | x3000c0s12b0n0 | Node | 100002   | Off   | OK      | True    | X86  | River | Management  | Sling    |
-    | x3000c0s14b0n0 | Node | 100003   | On    | Warning | True    | X86  | River | Management  | Sling    |
-    | x3000c0s16b0n0 | Node | 100004   | Ready | OK      | True    | X86  | River | Management  | Sling    |
-    | x3000c0s18b0n0 | Node | 100005   | Ready | OK      | True    | X86  | River | Management  | Sling    |
-    | x3000c0s20b0n0 | Node | 100006   | Off   | OK      | True    | X86  | River | Management  | Sling    |
-    | x3000c0s22b0n0 | Node | 100007   | On    | OK      | True    | X86  | River | Management  | Sling    |
-    | x3000c0s24b0n0 | Node | 100008   | On    | OK      | True    | X86  | River | Management  | Sling    |
-    | x3000c0s26b0n0 | Node | 100009   | On    | OK      | True    | X86  | River | Management  | Sling    |
+    +----------------+----------+-------+------+------------+---------+
+    | xname          | Aliases  | State | Flag | Role       | SubRole |
+    +----------------+----------+-------+------+------------+---------+
+    | x3000c0s13b0n0 | ncn-w004 | Off   | OK   | Management | Worker  |
+    | x3000c0s25b0n0 | ncn-w005 | Off   | OK   | Management | Worker  |
+    +----------------+----------+-------+------+------------+---------+
     ```
 
     **Attention:** When the NCNs are brought back online after a power outage or planned shutdown, `sat status` may report them as being `Off`.
@@ -559,28 +591,30 @@ Verify that the Lustre file system is available from the management cluster.
 1. (`ncn-m001#`) Check for NCN status.
 
     ```bash
-    sat status --filter Role=Management
+    sat status --filter role=management --filter enabled=true --fields xname,aliases,state,flag,role,subrole
     ```
 
     Example output:
 
     ```text
-    +----------------+------+--------+-------+------+---------+------+-------+------------+----------+
-    | xname          | Type | NID    | State | Flag | Enabled | Arch | Class | Role       | Net Type |
-    +----------------+------+--------+-------+------+---------+------+-------+------------+----------+
-    | x3000c0s10b0n0 | Node | 100001 | On    | OK   | True    | X86  | River | Management | Sling    |
-    | x3000c0s12b0n0 | Node | 100002 | On    | OK   | True    | X86  | River | Management | Sling    |
-    | x3000c0s14b0n0 | Node | 100003 | On    | OK   | True    | X86  | River | Management | Sling    |
-    | x3000c0s16b0n0 | Node | 100004 | Ready | OK   | True    | X86  | River | Management | Sling    |
-    | x3000c0s18b0n0 | Node | 100005 | Ready | OK   | True    | X86  | River | Management | Sling    |
-    | x3000c0s20b0n0 | Node | 100006 | On    | OK   | True    | X86  | River | Management | Sling    |
-    | x3000c0s22b0n0 | Node | 100007 | On    | OK   | True    | X86  | River | Management | Sling    |
-    | x3000c0s24b0n0 | Node | 100008 | On    | OK   | True    | X86  | River | Management | Sling    |
-    | x3000c0s26b0n0 | Node | 100009 | On    | OK   | True    | X86  | River | Management | Sling    |
-    +----------------+------+--------+-------+------+---------+------+-------+------------+----------+
+    +----------------+----------+-----------+------+------------+---------+
+    | xname          | Aliases  | State     | Flag | Role       | SubRole |
+    +----------------+----------+-----------+------+------------+---------+
+    | x3000c0s1b0n0  | ncn-m001 | Populated | OK   | Management | Master  |
+    | x3000c0s3b0n0  | ncn-m002 | Ready     | OK   | Management | Master  |
+    | x3000c0s5b0n0  | ncn-m003 | Ready     | OK   | Management | Master  |
+    | x3000c0s7b0n0  | ncn-w001 | Ready     | OK   | Management | Worker  |
+    | x3000c0s9b0n0  | ncn-w002 | Ready     | OK   | Management | Worker  |
+    | x3000c0s11b0n0 | ncn-w003 | Ready     | OK   | Management | Worker  |
+    | x3000c0s13b0n0 | ncn-w004 | Ready     | OK   | Management | Worker  |
+    | x3000c0s17b0n0 | ncn-s001 | Ready     | OK   | Management | Storage |
+    | x3000c0s19b0n0 | ncn-s002 | Ready     | OK   | Management | Storage |
+    | x3000c0s21b0n0 | ncn-s003 | Ready     | OK   | Management | Storage |
+    | x3000c0s25b0n0 | ncn-w005 | Ready     | OK   | Management | Worker  |
+    +----------------+----------+-----------+------+------------+---------+
     ```
 
-1. To check the health and status of the management cluster after a power cycle, refer to the "Platform Health Checks" section in [Validate CSM Health](../validate_csm_health.md).
+1. To check the health and status of the management cluster after a power cycle, refer to the sections 1-4 in [Validate CSM Health](../validate_csm_health.md).
 
 ## Next step
 

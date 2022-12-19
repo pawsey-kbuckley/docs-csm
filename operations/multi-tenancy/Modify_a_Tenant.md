@@ -11,6 +11,7 @@ This page provides information about how to modify a tenant. Modifications that 
 - [Apply the modified TAPMS CR](#apply-the-modified-tapms-cr)
 - [Modify the `slurm` operator CR](#modify-the-slurm-operator-cr)
 - [Apply the `slurm` operator CR](#apply-the-slurm-operator-cr)
+- [Modify the Slurm configuration](#modify-the-slurm-configuration)
 
 ## Modify the existing TAPMS CR
 
@@ -122,8 +123,71 @@ This page provides information about how to modify a tenant. Modifications that 
 
 ## Modify the `slurm` operator CR
 
-_placeholder for `slurm` content_
+To make changes to a Slurm tenant deployment, first update the Slurm custom
+resource file. The Slurm operator will attempt to reconcile the following
+changes:
+
+- Changing the munge key length
+- Changing the `slurmctld` PVC
+- Changing the Percona XtraDB, `slurmctld`, or `slurmdbd` deployments
 
 ## Apply the `slurm` operator CR
 
-_placeholder for `slurm` content_
+- (`ncn-mw#`) To update the Slurm custom resource, apply the changed file:
+
+    ```sh
+    kubectl apply -f <cluster>.yaml
+    ```
+
+Once the custom resource has been updated, the Slurm operator will attempt to
+update the relevant Kubernetes resources to reflect the changes.
+
+## Modify the Slurm configuration
+
+If the list of nodes assigned to a tenant changes, the Slurm configuration
+must be updated by rerunning the Kubernetes job that generates it. This
+procedure can also be used to change Slurm configuration settings, or add new
+Slurm configuration files.
+
+- (`ncn-mw#`) Get the current configuration:
+
+    ```sh
+    kubectl get configmap -n slurm-operator <cluster>-config-templates -o yaml >slurm-config-templates.yaml
+    ```
+
+- (`ncn-mw#`) To edit an existing configuration file (for example, `slurm.conf`):
+
+    ```sh
+    yq r slurm-config-templates.yaml 'data."slurm.conf"' >slurm.conf
+    # Edit slurm.conf
+    yq w -i slurm-config-templates.yaml 'data."slurm.conf"' "$(cat slurm.conf)"
+    ```
+
+- (`ncn-mw#`) To add a new configuration file (for example, `topology.conf`):
+
+    ```sh
+    yq w -i slurm-config-templates.yaml 'data."topology.conf"' "$(cat topology.conf)"
+    ```
+
+- (`ncn-mw#`) Apply changes to the configuration templates:
+
+    ```sh
+    kubectl apply -f slurm-config-templates.yaml
+    ```
+
+- (`ncn-mw#`) Rerun the Slurm configuration job:
+
+    ```sh
+    kubectl get job -n slurm-operator <cluster>-slurm-config -o yaml >slurm-config.yaml
+    yq d -i slurm-config.yaml spec.template.metadata
+    yq d -i slurm-config.yaml spec.selector
+    kubectl delete -f slurm-config.yaml
+    kubectl create -f slurm-config.yaml
+    ```
+
+- (`ncn-mw#`) Once the job has completed, reconfigure Slurm:
+
+    ```sh
+    SLURMCTLD_POD=$(kubectl get pod -n <namespace> -lapp.kubernetes.io/name=slurmctld -o jsonpath='{.items[0].metadata.name}')
+    kubectl exec -n <namespace> ${SLURMCTLD_POD} -c slurmctld -- scontrol reconfigure
+    ```

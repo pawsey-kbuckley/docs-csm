@@ -1,7 +1,9 @@
 # FAS Recipes
 
-> **`NOTE`** This is a collection of various FAS recipes for performing updates.
-> For step by step directions and commands, see [FAS Use Cases](FAS_Use_Cases.md).
+**NEW**: The [`FASUpdate.py script`](FASUpdate_Script.md) can be used to perform default updates to firmware and BIOS.
+
+**`NOTE`** This is a collection of various FAS recipes for performing updates.
+For step by step directions and commands, see [FAS Use Cases](FAS_Use_Cases.md).
 
 The following example JSON files are useful to reference when updating specific hardware components. In all of these examples, the `overrideDryrun` field will be set to `false`; set them to `true` to perform a live update.
 
@@ -18,12 +20,47 @@ Refer to [FAS Filters](FAS_Filters.md) for more information on the content used 
 
 ### (Cray) Device Type: `ChassisBMC` | Target: BMC
 
+**`NOTE`** This is a collection of various FAS recipes for performing updates.
+For step by step directions and commands, see [FAS Use Cases](FAS_Use_Cases.md).
+
 > **IMPORTANT:** Before updating a CMM:
 >
-> - Make sure all slot and rectifier power is off.
-> - The `hms-discovery` job must also be stopped before updates and restarted after updates are complete.
->   - (`ncn-mw#`) Stop `hms-discovery` job: `kubectl -n services patch cronjobs hms-discovery -p '{"spec":{"suspend":true}}'`
->   - (`ncn-mw#`) Start `hms-discovery` job: `kubectl -n services patch cronjobs hms-discovery -p '{"spec":{"suspend":false}}'`
+> - Stop the `hms-discovery` job before updates are done, and then restart it after updates are complete.
+>   1. (`ncn-mw#`) Stop the `hms-discovery` job.
+>
+>     ```bash
+>     kubectl -n services patch cronjobs hms-discovery -p '{"spec":{"suspend":true}}'
+>     ```
+>
+>   1. (`ncn-mw#`) Start the `hms-discovery` job.
+>
+>     ```bash
+>     kubectl -n services patch cronjobs hms-discovery -p '{"spec":{"suspend":false}}'
+>     ```
+>
+> - Use CAPMC to make sure all chassis rectifier power is off.
+>   1. Check power status of the chassis.
+>
+>      (`ncn-mw#`) If the chassis power is off, then everything else is off, and it is safe to proceed.
+>
+>      ```bash
+>      cray capmc get_xname_status create --xnames x[1000-1008]c[0-7]
+>      ```
+>
+>   1. If the chassis are still powered on, then use CAPMC to make sure everything is off.
+>
+>      1. (`ncn-mw#`) Issue power off command.
+>
+>         This command may produce a large list of errors when talking to BMCs. This is expected if the hardware
+>         has been partially powered down.
+>
+>         ```bash
+>         cray capmc xname_off create --xnames x[1000-1008]c[0-7] --force true --continue true --recursive true
+>         ```
+>
+>      1. Verify that chassis power is off.
+>
+>         Repeat the earlier check of the chassis power.
 
 ```json
 {
@@ -82,6 +119,9 @@ Refer to [FAS Filters](FAS_Filters.md) for more information on the content used 
 
 ### (Cray) Device Type: `NodeBMC` | Target: `NodeBIOS`
 
+**`NOTE`** This is a collection of various FAS recipes for performing updates.
+For step by step directions and commands, see [FAS Use Cases](FAS_Use_Cases.md).
+
 > **IMPORTANT:**
 >
 > - The nodes themselves must be powered **off** in order to update their BIOS. The BMC will still have power and will perform the update.
@@ -120,11 +160,18 @@ Refer to [FAS Filters](FAS_Filters.md) for more information on the content used 
 
 ### (Cray) Device Type: `NodeBMC` | Target: Redstone FPGA
 
+**`NOTE`** This is a collection of various FAS recipes for performing updates.
+For step by step directions and commands, see [FAS Use Cases](FAS_Use_Cases.md).
+
 > **IMPORTANT:**
 >
 > - The nodes themselves must be powered **on** in order to update the firmware of the Redstone FPGA on the nodes.
 > - If updating FPGAs fails because of `No Image available`, update using the "Override an Image for an Update" procedure in [FAS Admin Procedures](FAS_Admin_Procedures.md):
->   - (`ncn-mw#`) Find the `imageID` using the following command: `cray fas images list --format json | jq '.[] | .[] | select(.target=="Node0.AccFPGA0")'`
+>   - (`ncn-mw#`) Find the `imageID` using the following command:
+>
+>     ```bash
+>     cray fas images list --format json | jq '.[] | .[] | select(.target=="Node0.AccFPGA0")'
+>     ```
 
 ```json
 {
@@ -157,6 +204,9 @@ Refer to [FAS Filters](FAS_Filters.md) for more information on the content used 
 
 ### (HPE) Device Type: `NodeBMC` | Target: iLO 5 (BMC)
 
+> **`NOTE`** This is a collection of various FAS recipes for performing updates.
+> For step by step directions and commands, see [FAS Use Cases](FAS_Use_Cases.md).
+
 ```json
 {
 "stateComponentFilter": {
@@ -184,6 +234,9 @@ Refer to [FAS Filters](FAS_Filters.md) for more information on the content used 
 ```
 
 ### (HPE) Device Type: `NodeBMC` | Target: System ROM (BIOS)
+
+**`NOTE`** This is a collection of various FAS recipes for performing updates.
+For step by step directions and commands, see [FAS Use Cases](FAS_Use_Cases.md).
 
 > **IMPORTANT:**
 >
@@ -224,6 +277,9 @@ Refer to [FAS Filters](FAS_Filters.md) for more information on the content used 
 
 ### (Gigabyte) Device Type: `NodeBMC` | Target: BMC
 
+> **`NOTE`** This is a collection of various FAS recipes for performing updates.
+> For step by step directions and commands, see [FAS Use Cases](FAS_Use_Cases.md).
+
 ```json
 {
 "stateComponentFilter": {
@@ -257,7 +313,7 @@ Refer to [FAS Filters](FAS_Filters.md) for more information on the content used 
 
 A node may fail to update with the output:
 
-```text
+```toml
 stateHelper = "Firmware Update Information Returned Downloading – See /redfish/v1/UpdateService"
 ```
 
@@ -272,6 +328,9 @@ To resolve this issue, do either of the following actions:
 Make sure to wait for the current firmware to be updated before starting a new FAS action on the same node.
 
 ### (Gigabyte) Device Type: `NodeBMC` | Target: BIOS
+
+> **`NOTE`** This is a collection of various FAS recipes for performing updates.
+> For step by step directions and commands, see [FAS Use Cases](FAS_Use_Cases.md).
 
 ```json
 {

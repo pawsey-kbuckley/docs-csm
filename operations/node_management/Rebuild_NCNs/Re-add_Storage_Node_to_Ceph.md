@@ -104,7 +104,7 @@ Use the following procedure to re-add a Ceph node to the Ceph cluster.
 
 ## Zap OSDs
 
-**IMPORTANT:** Only do this if unable to wipe the node prior to rebuild.
+**IMPORTANT:** Only do this if unable to wipe the node prior to rebuild. For example, when a storage node unintentionally goes down and needs to be rebuilt.
 
 **`NOTE`** The commands in the Zapping OSDs section must be run on a node running `ceph-mon`. Typically these are `ncn-s001`, `ncn-s002`, and `ncn-s003`.
 
@@ -197,4 +197,4 @@ This is automated as part of the install, but administrators may have to regener
 
 ## Next Step
 
-Proceed to the next step: [Storage Node Validation](Post_Rebuild_Storage_Node_Validation.md)
+Proceed to the next step to perform [Storage Node Validation](Post_Rebuild_Storage_Node_Validation.md). Otherwise, return to the main [Rebuild NCNs](Rebuild_NCNs.md) page.

@@ -27,12 +27,26 @@ basedir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 function main() {
     upload_worker_rebuild_template
+    upload_worker_rebuild_hooks
     upload_storage_rebuild_template
+    upload_iuf_install_template
+}
+
+function upload_iuf_install_template {
+    kubectl -n argo delete configmap iuf-install-workflow-files || true
+    kubectl -n argo create configmap iuf-install-workflow-files --from-file="${basedir}/../iuf"
+    kubectl -n argo delete configmap iuf-install-workflow-stages-files || true
+    kubectl -n argo create configmap iuf-install-workflow-stages-files --from-file="${basedir}/../iuf/stages.yaml"
+    kubectl -n argo apply -f "${basedir}/../iuf/operations" --recursive
 }
 
 function upload_worker_rebuild_template {
     kubectl -n argo delete configmap worker-rebuild-workflow-files || true
     kubectl -n argo create configmap worker-rebuild-workflow-files --from-file="${basedir}/../ncn/worker"
+}
+
+function upload_worker_rebuild_hooks {
+    kubectl -n argo apply -f "${basedir}/../ncn/hooks" --recursive
 }
 
 function upload_storage_rebuild_template {

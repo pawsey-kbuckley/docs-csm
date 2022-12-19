@@ -109,7 +109,7 @@ This section applies to all node types. The commands in this section assume the 
          cloud-init init
          ```
 
-1. Press enter on the console to ensure that the the login prompt is displayed including the correct hostname of this node.
+1. Press enter on the console to ensure that the login prompt is displayed including the correct hostname of this node.
 
 1. Exit the ConMan console.
 
@@ -163,6 +163,6 @@ This section applies to all node types. The commands in this section assume the 
          diff "${XNAME}.json" "${XNAME}.check.json"
          ```
 
-## Next step
+## Next Step
 
-Proceed to the next step to [Validate Boot Raid](Validate_Boot_Raid.md).
+Proceed to the next step to [Validate Boot Loader](Validate_Boot_Loader.md). Otherwise, return to the main [Rebuild NCNs](Rebuild_NCNs.md) page.

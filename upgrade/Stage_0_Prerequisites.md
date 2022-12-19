@@ -2,23 +2,24 @@
 
 > **Reminders:**
 >
-> - CSM 1.2.0 or higher is required in order to upgrade to CSM 1.3.0.
+> - CSM 1.3.0 or higher is required in order to upgrade to CSM 1.4.0.
 > - If any problems are encountered and the procedure or command output does not provide relevant guidance, see
 >   [Relevant troubleshooting links for upgrade-related issues](Upgrade_Management_Nodes_and_CSM_Services.md#relevant-troubleshooting-links-for-upgrade-related-issues).
 
 Stage 0 has several critical procedures which prepare the environment and verify if the environment is ready for the upgrade.
 
-- [Start typescript](#start-typescript)
-- [Stage 0.1 - Prepare assets](#stage-01---prepare-assets)
-  - [Direct download](#direct-download)
-  - [Manual copy](#manual-copy)
-- [Stage 0.2 - Prerequisites](#stage-02---prerequisites)
-- [Stage 0.3 - Customize the new NCN image and update NCN personalization configurations](#stage-03---customize-the-new-ncn-image-and-update-ncn-personalization-configurations)
-  - [Standard upgrade](#standard-upgrade)
-  - [CSM-only system upgrade](#csm-only-system-upgrade)
-- [Stage 0.4 - Backup workload manager data](#stage-04---backup-workload-manager-data)
-- [Stop typescript](#stop-typescript)
-- [Stage completed](#stage-completed)
+- [Stage 0 - Prerequisites and Preflight Checks](#stage-0---prerequisites-and-preflight-checks)
+  - [Start typescript](#start-typescript)
+  - [Stage 0.1 - Prepare assets](#stage-01---prepare-assets)
+    - [Direct download](#direct-download)
+    - [Manual copy](#manual-copy)
+  - [Stage 0.2 - Prerequisites](#stage-02---prerequisites)
+  - [Stage 0.3 - Customize the new NCN image and update NCN personalization configurations](#stage-03---customize-the-new-ncn-image-and-update-ncn-personalization-configurations)
+    - [Standard upgrade](#standard-upgrade)
+    - [CSM-only system upgrade](#csm-only-system-upgrade)
+  - [Stage 0.4 - Backup workload manager data](#stage-04---backup-workload-manager-data)
+  - [Stop typescript](#stop-typescript)
+  - [Stage completed](#stage-completed)
 
 ## Start typescript
 
@@ -39,7 +40,7 @@ after a break, always be sure that a typescript is running before proceeding.
 1. (`ncn-m001#`) Set the `CSM_RELEASE` variable to the **target** CSM version of this upgrade.
 
    ```bash
-   CSM_RELEASE=1.3.0
+   CSM_RELEASE=1.4.0
    CSM_REL_NAME=csm-${CSM_RELEASE}
    ```
 
@@ -47,13 +48,25 @@ after a break, always be sure that a typescript is running before proceeding.
 
    - If `ncn-m001` has internet access, then use the following commands to download and install the latest documentation.
 
-      > **Important:** The upgrade scripts expect the `docs-csm` RPM to be located at `/root/docs-csm-latest.noarch.rpm`; that is why these commands copy it there.
+      > **Important:** The upgrade scripts expect the `docs-csm` RPM to be located at `/root/docs-csm-latest.noarch.rpm`; that is why these commands copy it there.  
+      > ***NOTE:*** CSM does NOT support the use of proxy servers for anything other than downloading artifacts from external endpoints.
+      Using `http_proxy` or `https_proxy` in any way other than the following examples will cause many failures in subsequent steps.
 
-      ```bash
-      wget https://artifactory.algol60.net/artifactory/csm-rpms/hpe/stable/sle-15sp2/docs-csm/1.3/noarch/docs-csm-latest.noarch.rpm \
+      - Without proxy:
+
+        ```bash
+        wget https://release.algol60.net/csm-1.4/docs-csm/docs-csm-latest.noarch.rpm \
           -O /root/docs-csm-latest.noarch.rpm &&
-      rpm -Uvh --force /root/docs-csm-latest.noarch.rpm
-      ```
+        rpm -Uvh --force /root/docs-csm-latest.noarch.rpm
+        ```
+
+      - With https proxy:
+
+        ```bash
+        https_proxy=https://example.proxy.net:443 wget https://release.algol60.net/csm-1.4/docs-csm/docs-csm-latest.rpm \
+          -O /root/docs-csm-latest.noarch.rpm &&
+        rpm -Uvh --force /root/docs-csm-latest.noarch.rpm
+        ```
 
    - Otherwise, use the following procedure to download and install the latest documentation.
 
@@ -75,21 +88,71 @@ after a break, always be sure that a typescript is running before proceeding.
 
 1. (`ncn-m001#`) Create and mount an `rbd` device where the CSM release tarball can be stored.
 
+   This mounts the `rbd` device at `/etc/cray/upgrade/csm` on `ncn-m001`. This mount is available to stage content for the install/upgrade process.
+
+   > For more information about the tool used in this procedure, including troubleshooting information, see
+   > [CSM RBD Tool Usage](../operations/utility_storage/CSM_rbd_tool_Usage.md).
+
    1. Initialize the Python virtual environment.
 
       ```bash
       tar xvf /usr/share/doc/csm/scripts/csm_rbd_tool.tar.gz -C /opt/cray/csm/scripts/
       ```
 
-   1. Create and map the `rbd` device.
-
-      **IMPORTANT:** This mounts the `rbd` device at `/etc/cray/upgrade/csm` on `ncn-m001`.
+   1. Check if the `rbd` device already exists.
 
       ```bash
       source /opt/cray/csm/scripts/csm_rbd_tool/bin/activate
-      python /usr/share/doc/csm/scripts/csm_rbd_tool.py --pool_action create --rbd_action create --target_host ncn-m001
-      deactivate
+      /usr/share/doc/csm/scripts/csm_rbd_tool.py --status
       ```
+
+      - Expected output if `rbd` device does not exist:
+
+         ```text
+         Pool csm_admin_pool does not exist
+         Pool csm_admin_pool exists: False
+         RBD device exists None
+         ```
+
+      - Example output if `rbd` device already exists and is mounted on `ncn-m002`:
+
+         ```text
+         [{"id":"0","pool":"csm_admin_pool","namespace":"","name":"csm_scratch_img","snap":"-","device":"/dev/rbd0"}]
+         Pool csm_admin_pool exists: True
+         RBD device exists True
+         RBD device mounted at - ncn-m002.nmn:/etc/cray/upgrade/csm
+         ```
+
+   1. Perform one of the following options based on the output of the status check.
+
+      - The `rbd` device does not exist.
+
+         1. Create and map the `rbd` device.
+
+            ```bash
+            /usr/share/doc/csm/scripts/csm_rbd_tool.py --pool_action create --rbd_action create --target_host ncn-m001
+            deactivate
+            ```
+
+      - The `rbd` device exists.
+
+         1. Move the device to `ncn-m001`, if necessary.
+
+            This step is not necessary if the status output indicated that the device is already mounted on `ncn-m001`.
+
+            ```bash
+            /usr/share/doc/csm/scripts/csm_rbd_tool.py --rbd_action move --target_host ncn-m001
+            deactivate
+            ```
+
+         1. Remove leftover state file from a previous CSM upgrade, if necessary.
+
+            **IMPORTANT:** If upgrading from a CSM version that had previously mounted this `rbd` device, then the `/etc/cray/upgrade/csm/myenv`
+            file must be removed before proceeding with this upgrade, because it contains information from the previous upgrade.
+
+            ```bash
+            [[ -f /etc/cray/upgrade/csm/myenv ]] && rm -f /etc/cray/upgrade/csm/myenv
+            ```
 
 1. Follow either the [Direct download](#direct-download) or [Manual copy](#manual-copy) procedure.
 
@@ -108,8 +171,16 @@ after a break, always be sure that a typescript is running before proceeding.
    ENDPOINT=https://put.the/url/here/
    ```
 
-1. (`ncn-m001#`) Run the script.
+1. This step should ONLY be performed if an http proxy is required to access a public endpoint on the internet for the purpose of downloading artifacts.
+CSM does NOT support the use of proxy servers for anything other than downloading artifacts from external endpoints.
+The http proxy variables must be `unset` after the desired artifacts are downloaded. Failure to unset the http proxy variables after downloading artifacts will cause many failures in subsequent steps.
 
+   ```bash
+   export https_proxy=https://example.proxy.net:443
+   export http_proxy=http://example.proxy.net:80
+   ```
+
+1. (`ncn-m001#`) Run the script.  
    **NOTE** For Cray/HPE internal installs, if `ncn-m001` can reach the internet, then the `--endpoint` argument may be omitted.
 
    > The `prepare-assets.sh` script will delete the CSM tarball (after expanding it) in order to free up space.
@@ -118,6 +189,13 @@ after a break, always be sure that a typescript is running before proceeding.
 
    ```bash
    /usr/share/doc/csm/upgrade/scripts/upgrade/prepare-assets.sh --csm-version ${CSM_RELEASE} --endpoint "${ENDPOINT}"
+   ```
+
+1. This step must be performed if an http proxy was set previously.
+
+   ```bash
+   unset https_proxy
+   unset http_proxy
    ```
 
 1. Skip the `Manual copy` subsection and proceed to [Stage 0.2 - Prerequisites](#stage-02---prerequisites)
@@ -219,21 +297,38 @@ after a break, always be sure that a typescript is running before proceeding.
 
 There are two possible scenarios. Follow the procedure for the scenario that is applicable to the upgrade being performed.
 
+While the names are similar, image customization is different than node personalization. Image customization is the
+process of using Ansible stored in VCS in conjunction with the CFS and IMS microservices to customize an image before
+it is booted. Node personalization is the process of using Ansible stored in VCS in conjunction with the CFS and IMS
+microservices to personalize a node after it has booted.
+
 - [Standard upgrade](#standard-upgrade) - Upgrading CSM on a system that has products installed other than CSM.
 - [CSM-only system upgrade](#csm-only-system-upgrade) - Upgrading CSM only on a CSM-only system **no other products installed or being upgraded**.
 
-**NOTE:** For the standard upgrade, it will not be possible to rebuild NCNs on the current, pre-upgraded CSM version after performing these steps. Rebuilding NCNs will become the same thing as upgrading them.
-
 ### Standard upgrade
 
-The procedures for customizing the NCN image and updating NCN personalization configurations are found in the *HPE Cray EX System Software Getting Started Guide S-8000*, section
-"HPE Cray EX Software Upgrade Workflow", subsection "Cray System Management (CSM)".
+In most cases, administrators will be performing a standard upgrade and not a CSM-only system upgrade.
+In the standard upgrade, the new worker NCN images must be customized, and all NCNs must have their personalization configurations updated in CFS.
+
+**NOTE:** For the standard upgrade, it will not be possible to rebuild NCNs on the current, pre-upgraded CSM version after performing these steps. Rebuilding NCNs will become the same thing as upgrading them.
+
+1. Prepare the pre-boot worker NCN image customizations.
+
+    This will ensure that the CFS configuration layers are applied to perform image customization for the worker NCNs.
+    See [Worker Image Customization](../operations/configuration_management/Worker_Image_Customization.md).
+
+1. Prepare the post-boot NCN personalizations.
+
+    This will ensure that the appropriate CFS configuration layers are applied when performing post-boot node personalization of the master, storage, and worker NCNs.
+    See [NCN Node Personalization](../operations/configuration_management/NCN_Node_Personalization.md).
+
+Continue on to [Stage 0.4](#stage-04---backup-workload-manager-data), skipping the [CSM-only system upgrade](#csm-only-system-upgrade) subsection below.
 
 ### CSM-only system upgrade
 
 This upgrade scenario is extremely uncommon in production environments.
 
-1. (`ncn-m001#`) Generate new CFS configuration for the NCNs.
+1. (`ncn-m001#`) Generate a new CFS configuration for the NCNs.
 
     This script will also leave CFS disabled for the NCNs. CFS will automatically be re-enabled on them as they are rebooted during the upgrade.
 

@@ -40,6 +40,8 @@ to the exiting problem seen into the existing search. (The example searches for 
 * [`initrd.img.xz` not found](known_issues/initrd.img.zx_not_found.md)
 * [SSL Certificate Validation Issues](known_issues/ssl_certificate_validation_issues.md)
 * [SLS Not Working During Node Rebuild](known_issues/SLS_Not_Working_During_Node_Rebuild.md)
+* [Antero node NID allocation](known_issues/antero_node_NID_allocation.md)
+* [HPE nodes not properly transitioning power state](known_issues/hpe_systems_not_transitioning_power_state.md)
 
 ## Booting
 
@@ -79,6 +81,8 @@ See [Deprecated features](../introduction/differences.md#deprecated-features).
 
 ## Customer Management Network (CMN)
 
+* [DHCP run book](dhcp_runbook.md)
+* [DNS run book](dns_runbook.md)
 * [General configuration and troubleshooting](../operations/network/management_network/README.md)
 * [Troubleshoot CMN Issues](../operations/network/customer_accessible_networks/Troubleshoot_CMN_Issues.md)
 * [Troubleshoot DHCP Issues](../operations/network/dhcp/Troubleshoot_DHCP_Issues.md)
@@ -127,6 +131,7 @@ See [Deprecated features](../introduction/differences.md#deprecated-features).
 
 * [Common Vault Cluster Issues](../operations/security_and_authentication/Troubleshoot_Common_Vault_Cluster_Issues.md)
 * [Keycloak User Localization](../operations/security_and_authentication/Keycloak_User_Localization.md)
+* [Troubleshoot Kyverno configuration manually](../operations/security_and_authentication/Troubleshoot_Kyverno_Configuration_manually.md)
 
 ## Spire
 

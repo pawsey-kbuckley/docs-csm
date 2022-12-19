@@ -60,7 +60,7 @@ Preparation of the environment must be done before attempting to deploy the mana
 
 1. (`pit#`) If the NCNs are HPE hardware, then ensure that DCMI/IPMI is enabled.
 
-    This will enable `ipmitool` usage with the the BMCs.
+    This will enable `ipmitool` usage with the BMCs.
 
     ```bash
     /root/bin/bios-baseline.sh
@@ -177,7 +177,7 @@ for all nodes, the Ceph storage will have been initialized and the Kubernetes cl
     grep -oP "(${mtoken}|${wtoken})" /etc/dnsmasq.d/statics.conf | sort -u | xargs -t -i ipmitool -I lanplus -U "${USERNAME}" -E -H {} power on
     ```
 
-1. (`pit#`) Start watching the the first Kubernetes master's console.
+1. (`pit#`) Start watching the first Kubernetes master's console.
 
     Either stop watching `ncn-s001-mgmt` before doing this, or do it in a different window.
 
@@ -333,12 +333,15 @@ If the check fails after doing the rebuild, contact support.
 
 1. (`pit#`) Check the storage nodes.
 
-   ```bash
-   csi pit validate --ceph
-   ```
+    ```bash
+    csi pit validate --ceph
+    ```
 
-   > **NOTE:** See [Utility Storage](../operations/utility_storage/Utility_Storage.md) and [Ceph CSI Troubleshooting](troubleshooting_ceph_csi.md) in
-   order to help resolve any failed tests.
+    For assistance resolving failed tests, see the following pages:
+
+    - [Ceph CSI Troubleshooting](troubleshooting_ceph_csi.md)
+    - [Troubleshooting Unused Drives on Storage Nodes](troubleshooting_unused_drives_on_storage_nodes.md)
+    - [Utility Storage](../operations/utility_storage/Utility_Storage.md)
 
 1. (`pit#`) Check the master and worker nodes.
 

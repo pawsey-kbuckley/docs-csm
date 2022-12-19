@@ -105,6 +105,7 @@ Use the Boot Orchestration Service \(BOS\) to boot, configure, and shut down col
   - [Troubleshoot UAN Boot Issues](boot_orchestration/Troubleshoot_UAN_Boot_Issues.md)
   - [Troubleshoot Booting Nodes with Hardware Issues](boot_orchestration/Troubleshoot_Booting_Nodes_with_Hardware_Issues.md)
 - [BOS Options](boot_orchestration/Options.md)
+- [Rolling Upgrades using BOS](boot_orchestration/Rolling_Upgrades.md)
 - [BOS Limitations for Gigabyte BMC Hardware](boot_orchestration/Limitations_for_Gigabyte_BMC_Hardware.md)
 - [Compute Node Boot Sequence](boot_orchestration/Compute_Node_Boot_Sequence.md)
   - [Healthy Compute Node Boot Process](boot_orchestration/Healthy_Compute_Node_Boot_Process.md)
@@ -138,7 +139,7 @@ Additional links to power off sub-procedures provided for reference. Refer to th
 - [Prepare the System for Power Off](power_management/Prepare_the_System_for_Power_Off.md)
 - [Shut Down and Power Off Compute and User Access Nodes](power_management/Shut_Down_and_Power_Off_Compute_and_User_Access_Nodes.md)
 - [Save Management Network Switch Configuration Settings](power_management/Save_Management_Network_Switch_Configurations.md)
-- [Power Off Compute and IO Cabinets](power_management/Power_Off_Compute_and_IO_Cabinets.md)
+- [Power Off Compute Cabinets](power_management/Power_Off_Compute_Cabinets.md)
 - [Shut Down and Power Off the Management Kubernetes Cluster](power_management/Shut_Down_and_Power_Off_the_Management_Kubernetes_Cluster.md)
 - [Power Off the External Lustre File System](power_management/Power_Off_the_External_Lustre_File_System.md)
 
@@ -151,7 +152,7 @@ Procedures required for a full power on of an HPE Cray EX system.
 Additional links to power on sub-procedures provided for reference. Refer to the main procedure linked above before using any of these sub-procedures:
 
 - [Power On and Start the Management Kubernetes Cluster](power_management/Power_On_and_Start_the_Management_Kubernetes_Cluster.md)
-- [Power On Compute and IO Cabinets](power_management/Power_On_Compute_and_IO_Cabinets.md)
+- [Power On Compute Cabinets](power_management/Power_On_Compute_Cabinets.md)
 - [Power On the External Lustre File System](power_management/Power_On_the_External_Lustre_File_System.md)
 - [Power On and Boot Compute and User Access Nodes](power_management/Power_On_and_Boot_Compute_Nodes_and_User_Access_Nodes.md)
 - [Recover from a Liquid Cooled Cabinet EPO Event](power_management/Recover_from_a_Liquid_Cooled_Cabinet_EPO_Event.md)
@@ -233,7 +234,10 @@ The Configuration Framework Service \(CFS\) is available on systems for remote e
 - [Write Ansible Code for CFS](configuration_management/Write_Ansible_Code_for_CFS.md)
   - [Target Ansible Tasks for Image Customization](configuration_management/Target_Ansible_Tasks_for_Image_Customization.md)
 - [CFS Key Management](configuration_management/CFS_Key_Management.md)
-- [Pre-Boot Configuration of NCN Images](configuration_management/Pre_Boot_Configuration_of_NCN_Images.md)
+- Management NCN personalization and image customization
+  - [NCN Node Personalization](configuration_management/NCN_Node_Personalization.md)
+  - [Management Node Image Customization](configuration_management/Management_Node_Image_Customization.md)
+  - [Worker Image Customization](configuration_management/Worker_Image_Customization.md)
 
 ## Kubernetes
 
@@ -255,6 +259,7 @@ As a result, the system's micro-services are modular, resilient, and can be upda
   - [Check the Health and Balance of etcd Clusters](kubernetes/Check_the_Health_and_Balance_of_etcd_Clusters.md)
   - [Rebuild Unhealthy etcd Clusters](kubernetes/Rebuild_Unhealthy_etcd_Clusters.md)
   - [Backups for etcd-operator Clusters](kubernetes/Backups_for_etcd-operator_Clusters.md)
+  - [Create a Manual Backup of a Healthy Bare-Metal etcd Cluster](kubernetes/Create_a_Manual_Backup_of_a_Healthy_Bare-Metal_etcd_Cluster.md)
   - [Create a Manual Backup of a Healthy etcd Cluster](kubernetes/Create_a_Manual_Backup_of_a_Healthy_etcd_Cluster.md)
   - [Restore an etcd Cluster from a Backup](kubernetes/Restore_an_etcd_Cluster_from_a_Backup.md)
   - [Repopulate Data in etcd Clusters When Rebuilding Them](kubernetes/Repopulate_Data_in_etcd_Clusters_When_Rebuilding_Them.md)
@@ -344,6 +349,7 @@ Mechanisms used by the system to ensure the security and authentication of inter
   - [Troubleshoot Common Vault Cluster Issues](security_and_authentication/Troubleshoot_Common_Vault_Cluster_Issues.md)
 - [API Authorization](security_and_authentication/API_Authorization.md)
 - [Manage Sealed Secrets](security_and_authentication/Manage_Sealed_Secrets.md)
+- [Audit Logs](security_and_authentication/Audit_Logs.md)
 
 ## Resiliency
 
@@ -381,10 +387,13 @@ services running on Kubernetes, as well as for telemetry data coming from the co
 - [Adjust Ceph Pool Quotas](utility_storage/Adjust_Ceph_Pool_Quotas.md)
 - [Add Ceph OSDs](utility_storage/Add_Ceph_OSDs.md)
 - [Ceph Health States](utility_storage/Ceph_Health_States.md)
+- [Ceph Deep Scrubs](utility_storage/Ceph_Deep_Scrubs.md)
 - [Ceph Daemon Memory Profiling](utility_storage/Ceph_Daemon_Memory_Profiling.md)
 - [Ceph Service Check Script Usage](utility_storage/Ceph_Service_Check_Script_Usage.md)
 - [Ceph Orchestrator Usage](utility_storage/Ceph_Orchestrator_Usage.md)
 - [Ceph Storage Types](utility_storage/Ceph_Storage_Types.md)
+- [CSM RBD Tool Usage](utility_storage/CSM_rbd_tool_Usage.md)
+- [`cubs_tool` Usage](utility_storage/Cubs_tool_Usage.md)
 - [Dump Ceph Crash Data](utility_storage/Dump_Ceph_Crash_Data.md)
 - [Identify Ceph Latency Issues](utility_storage/Identify_Ceph_Latency_Issues.md)
 - [Cephadm Reference Material](utility_storage/Cephadm_Reference_Material.md)
@@ -412,6 +421,7 @@ confident that a lack of issues indicates the system is operating normally.
 - [Grafana Dashboards by Component](system_management_health/Grafana_Dashboards_by_Component.md)
   - [Troubleshoot Grafana Dashboard](system_management_health/Troubleshoot_Grafana_Dashboard.md)
 - [Remove Kiali](system_management_health/Remove_Kiali.md)
+- [Prometheus-Kafka-Adapter error during install](system_management_health/Prometheus_Kafka_Error.md)
 
 ## System Layout Service (SLS)
 
@@ -488,7 +498,7 @@ Monitor and manage compute nodes (CNs) and non-compute nodes (NCNs) used in the 
   - [Adding a Ceph Node to the Ceph Cluster](node_management/Rebuild_NCNs/Re-add_Storage_Node_to_Ceph.md)
   - [Customize PCIe Hardware](node_management/Customize_PCIe_Hardware.md)
   - [Customize Disk Hardware](node_management/Customize_Disk_Hardware.md)
-  - [Validate Boot Raid](node_management/Rebuild_NCNs/Validate_Boot_Raid.md)
+  - [Validate Boot Loader](node_management/Rebuild_NCNs/Validate_Boot_Loader.md)
   - [Validate Storage Node](node_management/Rebuild_NCNs/Post_Rebuild_Storage_Node_Validation.md)
   - [Final Validation Steps](node_management/Rebuild_NCNs/Final_Validation_Steps.md)
 - [Reboot NCNs](node_management/Reboot_NCNs.md)

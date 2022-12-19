@@ -79,6 +79,7 @@ analyzers
 analyzes
 analyzing
 Ansible
+Antero
 AOS-CX
 API
 APIs
@@ -199,6 +200,7 @@ DVS-specific
 eBGP
 eC
 Elasticsearch
+etag
 etcd
 EX
 exascale
@@ -294,6 +296,7 @@ Jinja
 Jinja2
 JViewer
 Kafka
+Kata
 Kea
 Keepalived
 keychain
@@ -348,6 +351,7 @@ MetalLB
 MetalLB's
 Mi100
 microservice
+microservices
 milli-CPUs
 miscategorized
 MLAG-LACP
@@ -420,6 +424,7 @@ PDU
 PDUs
 PECs
 PEM-encoded
+Percona
 permissioned
 PGs
 pickup
@@ -484,6 +489,7 @@ Rsyslog
 Runbook
 S-8000
 S-8024
+S-8031
 sC
 SCSD
 sC-ToR
@@ -500,6 +506,10 @@ singlemode
 site-routable
 Skopeo
 SLES-based
+SLES-15-SP2
+SLES-15-SP3
+SLES-15-SP4
+SLES-15-SP5
 SLS
 Slurm
 SMNet
@@ -585,10 +595,12 @@ V1.3.0
 v1.4
 v1.4.
 v1.4.0
+v1.4.1
 v1.4.2
 v1.4.x
 v1.5
 v1.5.
+v1.5.0
 V1.7
 V1.8
 V15.2.15
@@ -619,6 +631,7 @@ XL645d
 XL675d
 xname
 xnames
+XtraDB
 Yum
 zeroization
 zeroize
@@ -627,11 +640,8 @@ Zypper
 # Per-file spelling exceptions. Please keep this section sorted in order by filepath, to help make it easier to
 # see if a file already is listed.
 
-- background/README.md
+- background/ncn_kernel.md
 initramFS
-initrd
-overlayFS
-squashFS
 
 - glossary.md
 # To allow 802.3cd/bs
@@ -710,7 +720,14 @@ Alerta
 - operations/network/dns/DNS.md
 ExternalDNS
 
+- operations/network/dns/Manage_the_DNS_Unbound_Resolver.md
+ExternalDNS
+
 - RELEASE_NOTES.md
 5.x
 Antero
 Expat-15
+
+- troubleshooting/known_issues/antero_node_NID_allocation.md
+# To allow Site Init
+Init
