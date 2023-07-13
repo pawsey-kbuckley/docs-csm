@@ -91,6 +91,7 @@ Check the status of Ceph.
     11   ssd   3.49309          osd.11         up   1.00000  1.00000
     14   ssd   3.49309          osd.14         up   1.00000  1.00000
     17   ssd   3.49309          osd.17         up   1.00000  1.00000
+    ```
 
 2. If the node is up, then stop and disable all the Ceph services on the node being rebuilt.
 
