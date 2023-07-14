@@ -26,13 +26,15 @@ Follow the steps in only one of the sections below:
 
     See [Access the Keycloak User Management UI](Access_the_Keycloak_User_Management_UI.md) for more information.
 
-1. Click on `Clients` under the `Configure` header of the navigation panel on the left side of the page.
+1. Click on `Clients` under the `Manage` header of the navigation panel on the left side of the page.
 
 1. Click on the ID for the target client in the `Clients` table.
 
 1. Switch to the `Credentials` tab.
 
-1. Save the client secret stored in the `Secret` field.
+1. Save the client secret stored in the `Client Secret` field.
+
+    > **NOTE**: If the `Secret` field is empty hit the `Regenerate Secret` button to get the client secret.
 
     ![Keycloak Client Secret](../../img/operations/Keycloak_Client_Secret.png "Keycloak Client Secret")
 
@@ -92,6 +94,12 @@ Follow the steps in only one of the sections below:
 
     ```text
     8a91fdf2-f9c5-4c7f-8da8-49cfbb97680a
+    ```
+
+    If the command returns an error with `KeyError: 'value'` then run the following command to generate a new secret and retrieve it.
+
+    ```bash
+    curl -s -X POST -H "Authorization: Bearer $(get_master_token)" https://api-gw-service-nmn.local/keycloak/admin/realms/shasta/clients/$CLIENT_ID/client-secret | jq -r .value
     ```
 
 1. (`ncn-mw#`) Create a variable for the client secret.

@@ -2,7 +2,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2021-2023 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -24,7 +24,7 @@
 #
 
 set -e
-basedir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+basedir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 . ${basedir}/../common/upgrade-state.sh
 trap 'argo_err_report' ERR
 
@@ -33,30 +33,42 @@ dryRun=false
 baseUrl="https://api-gw-service-nmn.local"
 retry=true
 force=false
+upgrade=false
+rebuild=false
+zapOsds=false
+workflowType=""
+imageId=""
+desiredCfsConfig=""
+labels=""
 
 function usage() {
-    echo "CSM ncn worker and storage upgrade script"
-    echo
-    echo "Syntax: /usr/share/doc/csm/upgrade/scripts/upgrade/ncn-upgrade-worker-storage-nodes.sh [COMMA_SEPARATED_NCN_HOSTNAMES] [-f|--force|--retry|--base-url|--dry-run]"
-    echo "options:"
-    echo "--no-retry     Do not automatically retry  (default: false)"
-    echo "-f|--force     Remove failed worker or storage rebuild/upgrade workflow and create a new one  (default: ${force})"
-    echo "--base-url     Specify base url (default: ${baseUrl})"
-    echo "--dry-run      Print out steps of workflow instead of running steps (default: ${dryRun})"
-    echo
-    echo "*COMMA_SEPARATED_NCN_HOSTNAMES"
-    echo "  worker upgrade  - example 1) ncn-w001"
-    echo "  worker upgrade  - example 2) ncn-w001,ncn-w002,ncn-w003"
-    echo "  storage upgrade - example 3) ncn-s001"
-    echo "  storage upgrade - example 4) ncn-s001,ncn-s002,ncn-s003"
-    echo
+  echo "CSM ncn worker and storage upgrade script"
+  echo
+  echo "Syntax: /usr/share/doc/csm/upgrade/scripts/upgrade/ncn-upgrade-worker-storage-nodes.sh [COMMA_SEPARATED_NCN_HOSTNAMES] [-f|--force|--retry|--base-url|--dry-run|--upgrade|--rebuild]"
+  echo "options:"
+  echo "--no-retry          Do not automatically retry  (default: false)"
+  echo "-f|--force          Remove failed worker or storage rebuild/upgrade workflow and create a new one  (default: ${force})"
+  echo "--base-url          Specify base url (default: ${baseUrl})"
+  echo "--dry-run           Print out steps of workflow instead of running steps (default: ${dryRun})"
+  echo "--upgrade           Perform a node upgrade. This only needs to be specified when upgrading storage nodes."
+  echo "--image-id          The image-id that a worker node should be booted into when a node is rebuilt. This is optional."
+  echo "--zap-osds          Zap osds. Only do this if unable to wipe the node prior to rebuild. For example, when a storage node unintentionally goes down and needs to be rebuilt. (This can only be used with storage rebuilds)."
+  echo "--desired-cfs-conf  The desired cfs config worker node should be booted into when a node is rebuilt. This is optional."
+  echo "--reboot-timeout    The timeout on worker reboot. This is optional."
+  echo
+  echo "*COMMA_SEPARATED_NCN_HOSTNAMES"
+  echo "  worker upgrade  - example 1) ncn-w001"
+  echo "  worker upgrade  - example 2) ncn-w001,ncn-w002,ncn-w003 --image-id <image-id>"
+  echo "  storage upgrade - example 3) ncn-s001 --upgrade"
+  echo "  storage upgrade - example 4) ncn-s001,ncn-s002,ncn-s003 --upgrade"
+  echo
 }
 
 # Warn when passing in extra arguments that probably were intended to be comma
 # separated hosts to upgrade, should fix this script to just accept all args
 # after the first however
 function argerr() {
-  printf "Extra arguments %s present after arg parsing, did you intend these to be in the comma separated host list instead?\n\n" "$*">&2
+  printf "Extra arguments %s present after arg parsing, did you intend these to be in the comma separated host list instead?\n\n" "$*" >&2
 }
 
 terminal=false
@@ -78,6 +90,37 @@ while [[ $# -gt 0 ]]; do
         ;;
     --dry-run)
         dryRun=true
+        shift # past argument
+        ;;
+    --upgrade)
+        upgrade=true
+        shift # past argument
+        ;;
+    --rebuild)
+        rebuild=true
+        shift # past argument
+        ;;
+    --image-id)
+        imageId="$2"
+        shift # past argument
+        shift # past value
+        ;;
+    --desired-cfs-conf)
+        desiredCfsConfig="$2"
+        shift # past argument
+        shift # past value
+        ;;
+    --labels)
+        labels="$2"
+        shift # past argument
+        shift # past value
+        ;;
+    --zap-osds)
+        zapOsds=true
+        shift # past argument
+        ;;
+    --reboot-timeout)
+        rebootTimeout="$2"
         shift # past argument
         ;;
     ncn-w[0-9][0-9][0-9]*)
@@ -122,6 +165,45 @@ if $retry && $force; then
     retry=false
 fi
 
+if [[ $nodeType == "storage" ]]; then
+    if $upgrade; then 
+        workflowType="upgrade"
+    elif $rebuild; then
+        echo "Error: --rebuild flag was used for storage rebuild. This rebuild must be done manually. Follow instructions at /operations/node_management/Rebuild_NCNs/Rebuild_NCNs.md"
+        exit 1
+    else
+        echo "Input Error: when upgrading storage nodes, the '--upgrade' flag needs to specified."
+        exit 1
+    fi
+    if $upgrade && $rebuild; then
+        echo "Input Error: cannot use both '--rebuild' and '--upgrade' flag at the same time."
+        exit 1
+    fi
+fi
+
+# set default reboot timeout to 600 if not specified
+if [[ -z $rebootTimeout ]]; then
+    rebootTimeout=600
+fi
+
+# check that cfs config exists if desiredCfsConfig is not empty
+if [[ -n $desiredCfsConfig ]]; then
+    cray cfs configurations describe "$desiredCfsConfig" > /dev/null
+    if [[ $? -ne 0 ]]; then
+      # could not find the desired cfs configuration
+      exit 1
+    fi
+fi
+
+# check that image-id exists if imageId is not empty
+if [[ -n $imageId ]]; then
+    cray ims images describe "$imageId" > /dev/null
+    if [[ $? -ne 0 ]]; then
+      # could not find the desired cfs configuration
+      exit 1
+    fi
+fi
+
 function uploadWorkflowTemplates() {
     "${basedir}"/../../../workflows/scripts/upload-rebuild-templates.sh
 }
@@ -138,7 +220,10 @@ function createWorkflowPayload() {
 {
 "dryRun": ${dryRun},
 "hosts": ${jsonArray},
-"switchPassword": "${SW_ADMIN_PASSWORD}"
+"switchPassword": "${SW_ADMIN_PASSWORD}",
+"imageId": "${imageId}",
+"bootTimeoutInSeconds": ${rebootTimeout},
+"desiredCfsConfig": "${desiredCfsConfig}"$(if [[ -n "${labels}" ]]; then echo ", \"labels\": \"${labels}\""; fi)
 }
 EOF
     fi
@@ -148,11 +233,17 @@ EOF
         cat << EOF
 {
 "dryRun": ${dryRun},
-"hosts": ${jsonArray}
+"hosts": ${jsonArray},
+"zapOsds": ${zapOsds},
+"workflowType": "${workflowType}",
+"imageId": "${imageId}",
+"bootTimeoutInSeconds": ${rebootTimeout},
+"desiredCfsConfig": "${desiredCfsConfig}"$(if [[ -n "${labels}" ]]; then echo ", \"labels\": \"${labels}\""; fi)
 }
 EOF
     fi
 }
+
 
 function getToken() {
     # shellcheck disable=SC2155,SC2046
@@ -180,9 +271,11 @@ function getUnsucceededRebuildWorkflows() {
     if [[ ${http_code} -ne 200 ]]; then
         echo "Request Failed, Response code: ${http_code}"
         cat "${res_file}"
+        rm -f "${res_file}" > /dev/null 2>&1 || true
         exit 1
     fi
     jq -r ".[]? | .name?" < "${res_file}"
+    rm -f "${res_file}" > /dev/null 2>&1 || true
 }
 
 function createRebuildWorkflow() {
@@ -191,11 +284,13 @@ function createRebuildWorkflow() {
     if [[ ${http_code} -ne 200 ]]; then
         echo "Request Failed, Response code: ${http_code}"
         cat "${res_file}"
+        rm -f "${res_file}" > /dev/null 2>&1 || true
         exit 1
     fi
     local workflow
     workflow=$(grep -o 'ncn-lifecycle-rebuild-[a-z0-9]*' < "${res_file}" )
     echo "${workflow}"
+    rm -f "${res_file}" > /dev/null 2>&1  || true
 }
 
 function deleteRebuildWorkflow() {
@@ -204,8 +299,10 @@ function deleteRebuildWorkflow() {
     if [[ ${http_code} -ne 200 ]]; then
         echo "Request Failed, Response code: ${http_code}"
         cat "${res_file}"
+        rm -f "${res_file}" > /dev/null 2>&1 || true 
         exit 1
     fi
+    rm -f "${res_file}" > /dev/null 2>&1 || true 
 }
 
 function retryRebuildWorkflow() {
@@ -215,6 +312,7 @@ function retryRebuildWorkflow() {
         echo "Request Failed, Response code: ${http_code}"
         cat "${res_file}"
     fi
+    rm -f "${res_file}" > /dev/null 2>&1 || true 
 }
 
 printCmdArgs
@@ -241,22 +339,22 @@ fi
 # shellcheck disable=SC2046
 if $retry && [ "${numOfUnsucceededWorkflows}" -eq 1 ]; then
     workflow=$(echo "${unsucceededWorkflows[0]}" | grep -o 'ncn-lifecycle-rebuild-[a-z0-9]*')
-    echo "Retry workflow: ${workflow}"
+    echo "DEBUG - Retry workflow: ${workflow}"
     retryRebuildWorkflow "${workflow}"
 fi
 
 if [ "${numOfUnsucceededWorkflows}" -eq 0 ]; then
     # create a new workflow
     workflow=$(createRebuildWorkflow)
-    echo "Create workflow: ${workflow}"
+    echo "NOTICE - Create workflow: ${workflow}. Please see the workflow ${workflow} in the Argo UI to see detailed logs"
 fi
 
 if [[ -z "${workflow}" ]]; then
     echo
-    echo "No workflow to pull, something is wrong"
+    echo "ERROR - No workflow to pull, something is wrong"
 else 
     echo
-    echo "Poll status of: ${workflow}"
+    echo "DEBUG - Poll status of: ${workflow}"
 fi
 
 sleep 20
@@ -284,21 +382,24 @@ while true; do
         fi
 
         if [[ "${phase}" == "Failed" ]]; then
-            echo "Workflow in Failed state, Retry ..."
+            echo "WARNING - Workflow in Failed state, Retry ..."
             retryRebuildWorkflow "$workflow"
+            continue
         fi
 
         if [[ "${phase}" == "Error" ]]; then
-            echo "Workflow in Error state, Retry ..."
+            echo "WARNING - Workflow in Error state, Retry ..."
             retryRebuildWorkflow "$workflow"
+            continue
         fi
         runningSteps=$(jq -jr ".[] | select(.name==\"${workflow}\") | .status.nodes[] | select(.type==\"Retry\")| select(.phase==\"Running\")  | .name + \"\n  \" " < "${res_file}")
         succeededSteps=$(jq -jr ".[] | select(.name==\"${workflow}\") | .status.nodes[] | select(.type==\"Retry\")| select(.phase==\"Succeeded\")  | .name +\"\n  \" " < "${res_file}")
         clear
-        printf "\n%s\n" "Succeeded:"
-        echo "  ${succeededSteps}" | awk -F'.' '{print $2" -  "$3}'
-        printf "%s\n" "${phase}:"
-        echo "  ${runningSteps}"  | awk -F'.' '{print $2" -  "$3}'
+        printf "\n%s\n" "INFO - Succeeded:"
+        echo "INFO $(echo ${succeededSteps} | awk -F'.' '{print $2" -  "$3}')"
+        printf "%s\n" "INFO - ${phase}:"
+        echo "INFO $(echo ${runningSteps} | awk -F'.' '{print $2" -  "$3}')"
         sleep 10
     fi
+    rm -f "${res_file}" > /dev/null 2>&1 || true
 done

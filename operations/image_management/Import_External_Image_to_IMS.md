@@ -2,7 +2,11 @@
 
 The Image Management Service \(IMS\) is typically used to build images from IMS recipes and customize Images that are already known to IMS.
 However, it is sometimes the case that an image is built using a mechanism other than by IMS and needs to be added to IMS. In these cases,
-the following procedure can be used to add this external image to IMS and upload the image's artifact(s) to the Simple Storage Service (S3).
+the following procedure can be used to add this external image to IMS and upload the image's artifacts to the Simple Storage Service (S3).
+
+An automated tool is available to help the specific case of starting with image artifacts for a
+[Non-Compute Node (NCN)](../../glossary.md#non-compute-node-ncn) that are not yet in S3 or IMS. For more information, see
+[Import an NCN Image to IMS](Import_NCN_Image_to_IMS.md).
 
 * [Prerequisites](#prerequisites)
 * [Limitations](#limitations)
@@ -29,8 +33,6 @@ the following procedure can be used to add this external image to IMS and upload
   * An image root file is required.
   * Optionally, additional image artifacts may be specified including a kernel, `initrd`, and kernel parameters file.
 
-* A token providing S3 credentials has been generated.
-
 ## Limitations
 
 * The commands in this procedure must be run as the `root` user.
@@ -49,16 +51,13 @@ for example, for NCN boot images. If the actual set of image artifacts differs f
 
     IMS requires that an image's root filesystem is in SquashFS format. Select one of the following options based on the current state of the image root being used:
 
+    * If the image being added meets the above requirements, then skip the rest of this section and proceed to the next step.
     * If the image being added is in `tgz` format, then refer to [Convert TGZ Archives to SquashFS Images](Convert_TGZ_Archives_to_SquashFS_Images.md).
-    * If the image being added meets the above requirements, then proceed to [Create image record in IMS](#2-create-image-record-in-ims).
     * If the image root is in a format other than `tgz` or SquashFS, then convert the image root to `tgz`/SquashFS before continuing.
 
 ### 2. Set helper variables
 
 Set variables for all of the image artifact files, if needed. For example, `IMS_ROOTFS_FILENAME`, `IMS_INITRD_FILENAME`, and `IMS_KERNEL_FILENAME`.
-
-If this procedure is being done as part of [Management Node Image Customization](../configuration_management/Management_Node_Image_Customization.md),
-then these should already be set. In this case, skip this section and proceed to [Record artifact checksums](#3-record-artifact-checksums).
 
 1. (`ncn-mw#`) Set the `IMS_ROOTFS_FILENAME` variable to the file name of the SquashFS image root file to be uploaded.
 
@@ -153,10 +152,6 @@ then these should already be set. In this case, skip this section and proceed to
 
 ### 5. Upload artifacts to S3
 
-If this procedure is being done as part of [Management Node Image Customization](../configuration_management/Management_Node_Image_Customization.md),
-then these artifacts should already exist in S3. In this case, skip this section and proceed to
-[Create image manifest file and upload to S3](#6-create-image-manifest-file-and-upload-to-s3).
-
 1. Navigate to the directory containing the artifact files.
 
 1. (`ncn-mw#`) Verify that all image artifacts exist in the current working directory.
@@ -198,6 +193,14 @@ identified by a `type` value:
 * `application/vnd.cray.image.kernel`
 * `application/vnd.cray.image.parameters.boot`
 
+1. (`ncn-mw#`) Collect etag values for uploaded files.
+
+    ```bash
+    ROOTFS_ETAG=$( cray artifacts describe boot-images ${IMS_IMAGE_ID}/${IMS_ROOTFS_FILENAME} --format json | jq -r .artifact.ETag  | tr -d '"' )
+    KERNEL_ETAG=$( cray artifacts describe boot-images ${IMS_IMAGE_ID}/${IMS_KERNEL_FILENAME} --format json | jq -r .artifact.ETag  | tr -d '"' )
+    INITRD_ETAG=$( cray artifacts describe boot-images ${IMS_IMAGE_ID}/${IMS_INITRD_FILENAME} --format json | jq -r .artifact.ETag  | tr -d '"' )
+    ```
+
 1. (`ncn-mw#`) Generate an image manifest file.
 
     > If necessary, modify the following example to reflect the actual set of artifacts included in the image.
@@ -213,6 +216,7 @@ identified by a `type` value:
       "artifacts": [
         {
           "link": {
+              "etag": "${ROOTFS_ETAG}",
               "path": "s3://boot-images/${IMS_IMAGE_ID}/${IMS_ROOTFS_FILENAME}",
               "type": "s3"
           },
@@ -221,6 +225,7 @@ identified by a `type` value:
         },
         {
           "link": {
+              "etag": "${KERNEL_ETAG}",
               "path": "s3://boot-images/${IMS_IMAGE_ID}/${IMS_KERNEL_FILENAME}",
               "type": "s3"
           },
@@ -229,6 +234,7 @@ identified by a `type` value:
         },
         {
           "link": {
+              "etag": "${INITRD_ETAG}",
               "path": "s3://boot-images/${IMS_IMAGE_ID}/${IMS_INITRD_FILENAME}",
               "type": "s3"
           },
@@ -246,12 +252,19 @@ identified by a `type` value:
     cray artifacts create boot-images "${IMS_IMAGE_ID}/manifest.json" manifest.json
     ```
 
+1. (`ncn-mw#`) Collect the etag for the manifest file.
+
+    ```bash
+    MANIFEST_ETAG=$( cray artifacts describe boot-images ${IMS_IMAGE_ID}/manifest.json --format json | jq -r .artifact.ETag  | tr -d '"' )
+    ```
+
 1. (`ncn-mw#`) Update the IMS image record with the image manifest information.
 
     ```bash
     cray ims images update "${IMS_IMAGE_ID}" \
         --link-type s3 \
         --link-path "s3://boot-images/${IMS_IMAGE_ID}/manifest.json" \
+        --link-etag "${MANIFEST_ETAG}" \
         --format toml
     ```
 
@@ -265,5 +278,5 @@ identified by a `type` value:
     [link]
     type = "s3"
     path = "s3://boot-images/4e78488d-4d92-4675-9d83-97adfc17cb19/manifest.json"
-    etag = ""
+    etag = "627264cd4ab4d231a0b2bf42aabb4156"
     ```

@@ -2,7 +2,7 @@
  *
  *  MIT License
  *
- *  (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP
+ *  (C) Copyright 2021-2023 Hewlett Packard Enterprise Development LP
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a
  *  copy of this software and associated documentation files (the "Software"),
@@ -61,9 +61,11 @@ pipeline {
             matrix {
 
                 agent {
-                    node {
-                        label "metal-gcp-builder"
-                        customWorkspace "${env.WORKSPACE}/${sleVersion}"
+                    docker {
+                        label 'docker'
+                        reuseNode true
+                        image "${sleImage}:${sleVersion}"
+                        args "-v /home/jenkins/.ssh:/home/jenkins/.ssh"
                     }
                 }
 
@@ -74,35 +76,28 @@ pipeline {
                     }
                 }
 
+                environment{
+                    BUILD_DIR = "${env.WORKSPACE}/dist/rpmbuild/${sleVersion}"
+                    SPEC_FILE = "${env.NAME}-${sleVersion}.spec"
+                }
+
                 stages {
 
                     stage('Prepare: RPMs') {
-                        agent {
-                            docker {
-                                label 'docker'
-                                reuseNode true
-                                image "${sleImage}:${sleVersion}"
-                            }
-                        }
                         steps {
                             withCredentials([gitUsernamePassword(credentialsId: 'jenkins-algol60-cray-hpe-github-integration')]) {
-                                runLibraryScript("addRpmMetaData.sh", "${env.NAME}.spec")
-                                sh "git update-index --assume-unchanged ${env.NAME}.spec"
+                                sh "cp ${env.NAME}.spec ${env.SPEC_FILE}"
                                 sh "echo ${env.BRANCH_NAME}"
                                 sh "env"
                                 sh "make prepare"
+                                dir("${env.BUILD_DIR}/SPECS/") {
+                                    runLibraryScript("addRpmMetaData.sh", "${env.SPEC_FILE}")
+                                }
                             }
                         }
                     }
 
                     stage('Build: RPMs') {
-                        agent {
-                            docker {
-                                label 'docker'
-                                reuseNode true
-                                image "${sleImage}:${sleVersion}"
-                            }
-                        }
                         steps {
                             withCredentials([gitUsernamePassword(credentialsId: 'jenkins-algol60-cray-hpe-github-integration')]) {
                                 sh "make rpm"
@@ -119,16 +114,16 @@ pipeline {
                                     RELEASE_FOLDER = ""
                                 }
                                 ADDITIONAL_VERSIONS = ("${env.ADDITIONAL_VERSIONS}" == "null") ? [] : ["${env.ADDITIONAL_VERSIONS}"]
-                                sles_version_parts = "${sleVersion}".tokenize('.')
-                                sles_major = "${sles_version_parts[0]}"
-                                sles_minor = "${sles_version_parts[1]}"
+                                def sles_version_parts = "${sleVersion}".tokenize('.')
+                                def sles_major = "${sles_version_parts[0]}"
+                                def sles_minor = "${sles_version_parts[1]}"
                                 publishCsmRpms(
                                         additionalVersions: ADDITIONAL_VERSIONS,
                                         arch: "noarch",
                                         component: env.NAME + RELEASE_FOLDER,
                                         isStable: isStable,
                                         os: "sle-${sles_major}sp${sles_minor}",
-                                        pattern: "dist/rpmbuild/RPMS/noarch/*.rpm",
+                                        pattern: "dist/rpmbuild/${sleVersion}/RPMS/noarch/*.rpm",
                                 )
                                 publishCsmRpms(
                                         additionalVersions: ADDITIONAL_VERSIONS,
@@ -136,7 +131,7 @@ pipeline {
                                         component: env.NAME + RELEASE_FOLDER,
                                         isStable: isStable,
                                         os: "sle-${sles_major}sp${sles_minor}",
-                                        pattern: "dist/rpmbuild/SRPMS/*.rpm",
+                                        pattern: "dist/rpmbuild/${sleVersion}/SRPMS/*.rpm",
                                 )
                             }
                         }
@@ -158,4 +153,3 @@ pipeline {
         }
     }
   }
-

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # MIT License
 #
-# (C) Copyright [2022] Hewlett Packard Enterprise Development LP
+# (C) Copyright [2022-2023] Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -126,6 +126,7 @@ def main():
     parser.add_argument("--list", required=False, help="List files available in the recipes directory", action="store_true")
     parser.add_argument("--recipedir", type=str, required=False, help="Specify the directory to find the recipes", default="")
     parser.add_argument("--xnames", type=str, required=False, help="List of xnames to update", default="")
+    parser.add_argument("--imageID", type=str, required=False, help="image ID of image to flash to node", default="")
     parser.add_argument("--overrideDryrun", type=str2bool, required=False, help="Perform Dry or Real update", default=False)
     parser.add_argument("--watchtime", type=int, required=False, help="Time between actions status", default=30)
     parser.add_argument("--description", type=str, required=False, help="Overwrite description", default="")
@@ -189,6 +190,14 @@ def main():
         if "stateComponentFilter" not in data:
             data["stateComponentFilter"] = {}
         data["stateComponentFilter"]["xnames"] = xnames
+
+# Create image override
+    imageIDarg = args.imageID
+    if len(imageIDarg) > 0:
+        if "imageFilter" not in data:
+            data["imageFilter"] = {}
+        data["imageFilter"]["imageID"] = imageIDarg
+        data["imageFilter"]["overrideImage"] = True
 
 # Update description
     if "command" not in data:

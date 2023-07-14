@@ -1,7 +1,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2021-2023 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -67,16 +67,13 @@ prepare:
 	cp $(SPEC_FILE) $(BUILD_DIR)/SPECS/
 
 rpm_package_source:
-	tar --transform 'flags=r;s,^,/${NAME}-${VERSION}/,' --exclude .git --exclude dist -cvjf $(SOURCE_PATH) .
+	tar --transform 'flags=r;s,^,/${NAME}-${VERSION}/,' -cvjf $(SOURCE_PATH) $(SPEC_FILE) --exclude .git --exclude "*.spec" --exclude dist .
 
 rpm_build_source:
-	rpmbuild -ts $(SOURCE_PATH) --define "_topdir $(BUILD_DIR)"
+	rpmbuild -bs $(BUILD_DIR)/SPECS/$(SPEC_FILE) --define "_topdir $(BUILD_DIR)"
 
 rpm_build:
-	BUILD_METADATA=$(BUILD_METADATA) rpmbuild -ba $(SPEC_FILE) --define "_topdir $(BUILD_DIR)"
-
-rpm_latest: 
-	cp $(wildcard $(BUILD_DIR)/RPMS/noarch/docs-csm-$(VERSION)-*.noarch.rpm) "$(BUILD_DIR)/RPMS/noarch/docs-csm-latest.noarch.rpm" 
+	rpmbuild -ba $(BUILD_DIR)/SPECS/$(SPEC_FILE) --define "_topdir $(BUILD_DIR)"
 
 jekyll-cmds:
 	@echo "You'll probably want one of"

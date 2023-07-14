@@ -37,6 +37,13 @@ The panels interact with configured data sources, including the following:
 - Main
 - Clusters
 
+## Goss tests
+
+- Product test results
+- Suite test results
+- Test results
+- Node-wise test results
+
 ## Istio
 
 - Mesh
@@ -44,6 +51,29 @@ The panels interact with configured data sources, including the following:
 - Pilot
 - Service
 - Workload
+
+## IUF
+
+- Product
+- Stage
+- Operation
+
+## Kafka
+
+- Health Check
+- System
+- Throughput In/Out
+- Replication
+- Thread utilization
+- Zookeeper
+- ISR Shrinks / Expands
+- Logs size
+- Producer Performance
+- Consumer Performance
+- Fetch Follower Performance
+- Connections
+- Request rate
+- Message Conversion
 
 ## Kea
 
@@ -89,3 +119,9 @@ The panels interact with configured data sources, including the following:
 
 - Cluster
 - Node
+
+## Zookeeper
+
+- Health Check
+- System
+- Request Latency

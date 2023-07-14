@@ -1,7 +1,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2022-2023 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -29,17 +29,20 @@ metadata:
     before-all: "true"
 spec:
   scriptContent: |
-    targetNcns="{{.TargetNcns}}"
+    #!/bin/sh
+    echo "targetNcns: $TARGET_NCNS"
+    # example input of TARGET_NCNS: [ncn-w001 ncn-w002 ncn-w003]
     # remove '[' and ']'
-    targetNcns=${targetNcns:1:-1}
+    targetNcns=${TARGET_NCNS:1:-1}
     # convert to array
     targetNcnsArray=($targetNcns)
     # set last rebuilding worker to nodeMoveTo
     nodeMoveTo=${targetNcnsArray[-1]}
+    echo "last worker node to be rebuilt: $nodeMoveTo"
     # try to find a node that is not in targetNcns
     nodes=$(kubectl get nodes | grep "ncn-w" | awk '{print $1}')
     for node in $nodes;do
-      if echo $targetNcns | grep $node; then
+      if [[ $targetNcns == *$node* ]]; then
         echo "skip $node"
       else
         nodeMoveTo=${node}
@@ -49,23 +52,25 @@ spec:
 
     echo
 
-    pods=( "nexus" "ipxe" "kea" "cray-cfs-api-db" )
-    for pod in ${pods[@]};do
-      podName=$(kubectl get pods --all-namespaces | awk '{print $2}' | grep $pod)
-      if [[ -z $podName ]];then
-        echo "Couldn't not find pod: $pod"
-        echo "something is wrong"
+    criticalPodLabels=( "app=nexus" "app.kubernetes.io/name=cray-ipxe-x86-64" "app.kubernetes.io/name=cray-dhcp-kea" "app.kubernetes.io/name=cray-cfs-api-db" )
+    for label in ${criticalPodLabels[@]};do
+      pods=($(kubectl get pods -A -l ${label} -o custom-columns=:.metadata.name))
+      # we may have multiple pods matched with the label
+      # log error and exit on matching multiple pods
+      if [[ ${#pods[@]} -ne 1 ]]; then
+        echo "ERROR: label: ${label} matches zero/multiple pods"
         exit 1
-      fi                 
-      
+      fi
+      podName=${pods[0]}
       currentNode=$(kubectl get po -A -o wide | grep $podName | awk '{print $8}')
-      if [[ "$nodeMoveTo" != "$currentNode" ]]; then
+      ns=$(kubectl get po -A | grep $podName | awk '{print $1}')
+      if [[ $targetNcns != *$currentNode* ]]; then
+        echo "$podName is on $currentNode and that node is not being rebuilt by this workflow. Not moving $podName."
+      elif [[ "$nodeMoveTo" != "$currentNode" ]]; then
         echo "Move Pod: $podName to Node: $nodeMoveTo"
         /opt/cray/platform-utils/move_pod.sh $podName $nodeMoveTo > /dev/null
       fi
 
-      podName=$(kubectl get pods --all-namespaces | awk '{print $2}' | grep $pod)
-      ns=$(kubectl get po -A | grep $podName | awk '{print $1}')
-      kubectl wait --for=condition=ready pod $podName -n $ns --timeout=5m
+      kubectl wait --for=condition=ready pod -l ${label} -n $ns --timeout=5m
     done
   templateRefName: ssh-template

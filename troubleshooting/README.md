@@ -2,24 +2,11 @@
 
 This document provides links to troubleshooting information for services and functionality provided by CSM.
 
-## Helpful tips for navigating the CSM repository
-
-In the main repository landing page, change the branch to the CSM version being used on the system (for example, release/1.0, release/1.2, release/1.3).
-
-Use the pre-populated GitHub "Search or jump to..." function in the upper left hand side of the page and append keywords related
-to the exiting problem seen into the existing search. (The example searches for "ping" and "PXE" related troubleshooting resources on the "main" branch.)
-
-* Follow any run-books, guides, or procedures which are directly related to the problem.
-
-* Change the branch to "main" and search a second time to retrieve very recent or beta run-books and guides.
-
-* Users can also expand the search beyond the "troubleshooting" section (instead of doing "path troubleshooting") and/or use more advanced GitHub searches such as "path configure" to find the right context.
-
-## Quick links
-
+* [Helpful tips for navigating the CSM repository](#helpful-tips-for-navigating-the-csm-repository)
 * [Known issues](#known-issues)
 * [Booting](#booting)
-* [Compute rolling upgrades](#compute-rolling-upgrades)
+  * [UAN boot issues](#uan-boot-issues)
+  * [Compute node boot issues](#compute-node-boot-issues)
 * [Configuration management](#configuration-management)
 * [ConMan](#conman)
 * [Customer Management Network (CMN)](#customer-management-network-cmn)
@@ -30,18 +17,33 @@ to the exiting problem seen into the existing search. (The example searches for 
 * [Node management](#node-management)
 * [Security and authentication](#security-and-authentication)
 * [Spire](#spire)
-* [UAS](#user-access-service-uas)
+* [User Access Service (UAS)](#user-access-service-uas)
 * [Utility storage](#utility-storage)
+
+## Helpful tips for navigating the CSM repository
+
+In the main repository landing page, change the branch to the CSM version being used on the system (for example, `release/1.0`, `release/1.2`, `release/1.3`, etc.).
+
+Use the pre-populated GitHub "Search or jump to..." function in the upper left hand side of the page and append keywords related
+to the exiting problem seen into the existing search. (The example searches for "ping" and "PXE" related troubleshooting resources on the "main" branch.)
+
+* Follow any run-books, guides, or procedures which are directly related to the problem.
+
+* Change the branch to `main` and search a second time to retrieve very recent or beta run-books and guides.
+
+* Users can also expand the search beyond the "troubleshooting" section (instead of doing "path troubleshooting") and/or use more advanced GitHub searches such as "path configure" to find the right context.
 
 ## Known issues
 
-* [SAT/HSM/CAPMC Component Power State Mismatch](known_issues/component_power_state_mismatch.md)
+* [SAT/HSM/CAPMC/PCS Component Power State Mismatch](known_issues/component_power_state_mismatch.md)
 * [HMS Discovery job not creating `RedfishEndpoint`s in Hardware State Manager](known_issues/discovery_job_not_creating_redfish_endpoints.md)
 * [`initrd.img.xz` not found](known_issues/initrd.img.zx_not_found.md)
 * [SSL Certificate Validation Issues](known_issues/ssl_certificate_validation_issues.md)
 * [SLS Not Working During Node Rebuild](known_issues/SLS_Not_Working_During_Node_Rebuild.md)
 * [Antero node NID allocation](known_issues/antero_node_NID_allocation.md)
 * [HPE nodes not properly transitioning power state](known_issues/hpe_systems_not_transitioning_power_state.md)
+* [Software Management Services health check](known_issues/sms_health_check.md)
+* [QLogic driver crash on storage nodes](known_issues/qlogic_driver_crash.md)
 
 ## Booting
 
@@ -59,19 +61,9 @@ to the exiting problem seen into the existing search. (The example searches for 
 * [Log File Locations and Ports Used](../operations/boot_orchestration/Log_File_Locations_and_Ports_Used_in_Compute_Node_Boot_Troubleshooting.md)
 * [Issues Related to Slow Boot Times](../operations/boot_orchestration/Troubleshoot_Compute_Node_Boot_Issues_Related_to_Slow_Boot_Times.md)
 
-## Compute rolling upgrades
-
-CRUS was deprecated in CSM 1.2.0. It will be removed in a future CSM release and replaced with BOS V2, which will provide similar functionality.
-See [Deprecated features](../introduction/differences.md#deprecated-features).
-
-* [Nodes Failing to Upgrade in a CRUS Session](../operations/compute_rolling_upgrades/Troubleshoot_Nodes_Failing_to_Upgrade_in_a_CRUS_Session.md)
-* [Failed CRUS Session Because of Unmet Conditions](../operations/compute_rolling_upgrades/Troubleshoot_a_Failed_CRUS_Session_Due_to_Unmet_Conditions.md)
-* [Failed CRUS Session Because of Bad Parameters](../operations/compute_rolling_upgrades/Troubleshoot_a_Failed_CRUS_Session_Due_to_Bad_Parameters.md)
-
 ## Configuration management
 
-* [Ansible Play Failures in CFS Sessions](../operations/configuration_management/Troubleshoot_Ansible_Play_Failures_in_CFS_Sessions.md)
-* [CFS Session Failing to Complete](../operations/configuration_management/Troubleshoot_CFS_Session_Failing_to_Complete.md)
+* [Troubleshoot CFS Issues](../operations/configuration_management/Troubleshoot_CFS_Issues.md)
 
 ## ConMan
 

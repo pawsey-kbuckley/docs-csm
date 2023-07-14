@@ -374,27 +374,32 @@ Run the following steps on each master node.
                /root/kubelet_certs.tar /etc/kubernetes/kubelet.conf /var/lib/kubelet/pki/
    ```
 
-2. Log into the master node where the other certificates were updated.
+2. Log into the master node that has the `kubeadm` configuration file to generate new `kubelet.conf` files.
 
-   1. Get the current `apiserver-advertise-address`.
+   1. Find the master node with the `/etc/cray/kubernetes/kubeadmin.yaml` file.
 
       ```bash
-      kubectl config view|grep server
+      ncn# MASTERNODE=$(for node in ncn-m00{1..3}; do ssh root@$node test -f /etc/cray/kubernetes/kubeadm.yaml && echo $node && break; done)
+      ncn# echo $MASTERNODE
       ```
 
       Example output:
 
       ```text
-      server: https://10.252.120.2:6442
+      ncn-m002
       ```
 
-   1. Generate a new `kubelet.conf` file in the `/root/` directory with the IP address from the previous command.
-
-      **`NOTE`** The `apiserver-advertise-address` may vary, so do not copy and paste without verifying.
+   1. Log into the master
 
       ```bash
-      for node in $(kubectl get nodes -o json|jq -r '.items[].metadata.name'); do kubeadm alpha kubeconfig user --org system:nodes \
-                               --client-name system:node:$node --apiserver-advertise-address 10.252.120.2 --apiserver-bind-port 6442 > /root/$node.kubelet.conf; done
+      ncn# ssh $MASTERNODE
+      ```
+
+   1. Generate a new `kubelet.conf` file in the `/root/` directory.
+
+      ```bash
+      ncn-m# for node in $(kubectl get nodes -o json|jq -r '.items[].metadata.name'); do kubeadm kubeconfig user --org system:nodes \
+                               --client-name system:node:$node --config /etc/cray/kubernetes/kubeadm.yaml | sed "/WARNING/d" > /root/$node.kubelet.conf; done
       ```
 
       There should be a new `kubelet.conf` file per node running Kubernetes.
@@ -545,8 +550,8 @@ Run the following steps from a master node.
    1. Restart Prometheus.
 
       ```bash
-      kubectl rollout restart -n sysmgmt-health statefulSet/prometheus-cray-sysmgmt-health-promet-prometheus
-      kubectl rollout status -n sysmgmt-health statefulSet/prometheus-cray-sysmgmt-health-promet-prometheus
+      kubectl rollout restart -n sysmgmt-health statefulSet/prometheus-cray-sysmgmt-health-kube-p-prometheus
+      kubectl rollout status -n sysmgmt-health statefulSet/prometheus-cray-sysmgmt-health-kube-p-prometheus
       ```
 
       Example output:
@@ -559,8 +564,8 @@ Run the following steps from a master node.
    1. Check for any `tls` errors from the active Prometheus targets. No errors are expected.
 
       ```bash
-      PROM_IP=$(kubectl get services -n sysmgmt-health cray-sysmgmt-health-promet-prometheus -o json | jq -r '.spec.clusterIP')
-      curl -s http://${PROM_IP}:9090/api/v1/targets | jq -r '.data.activeTargets[] | select(."scrapePool" == "sysmgmt-health/cray-sysmgmt-health-promet-kube-etcd/0")' | grep lastError | sort -u
+      PROM_IP=$(kubectl get services -n sysmgmt-health cray-sysmgmt-health-kube-p-prometheus -o json | jq -r '.spec.clusterIP')
+      curl -s http://${PROM_IP}:9090/api/v1/targets | jq -r '.data.activeTargets[] | select(."scrapePool" == "sysmgmt-health/cray-sysmgmt-health-kube-p-kube-etcd/0")' | grep lastError | sort -u
       ```
 
       Example output:

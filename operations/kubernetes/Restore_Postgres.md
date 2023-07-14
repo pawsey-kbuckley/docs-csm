@@ -4,11 +4,17 @@ Below are the service-specific steps required to restore data to a Postgres clus
 
 Restore Postgres procedures by service:
 
-* [Restore Postgres for Spire](#restore-postgres-for-spire)
+* Restore Postgres for Spire
+  * [Restore from backup](#restore-postgres-for-spire)
+  * [Restore without backup](../spire/Restore_Spire_Postgres_without_a_Backup.md)
 * [Restore Postgres for Keycloak](#restore-postgres-for-keycloak)
 * [Restore Postgres for VCS](#restore-postgres-for-vcs)
-* [Restore Postgres for HSM](../hardware_state_manager/Restore_HSM_Postgres_from_Backup.md)
-* [Restore Postgres for SLS](../system_layout_service/Restore_SLS_Postgres_Database_from_Backup.md)
+* Restore Postgres for HSM
+  * [Restore from backup](../hardware_state_manager/Restore_HSM_Postgres_from_Backup.md)
+  * [Restore without backup](../hardware_state_manager/Restore_HSM_Postgres_without_a_Backup.md)
+* Restore Postgres for SLS
+  * [Restore from backup](../system_layout_service/Restore_SLS_Postgres_Database_from_Backup.md)
+  * [Restore without backup](../system_layout_service/Restore_SLS_Postgres_without_an_Existing_Backup.md)
 
 ## Restore Postgres for Spire
 
@@ -26,38 +32,33 @@ In the event that the Spire Postgres cluster must be rebuilt and the data restor
 
     * If a manual dump of the database was taken, then check that the dump file exists in a location off the Postgres cluster. It will be needed in the steps below.
     * If the database is being automatically backed up, then the most recent version of the dump and the secrets should exist in the `postgres-backup` S3 bucket.
-    These will be needed in the steps below. List the files in the `postgres-backup` S3 bucket and if the files exist, download the dump and secrets out of the S3 bucket.
-    The `cray artifacts` CLI can be used list and download the files. Note that the `.psql` file contains the database dump and the .manifest file contains the secrets.
+      These will be needed in the steps below. List the files in the `postgres-backup` S3 bucket and if the files exist, download the dump and secrets out of the S3 bucket.
+      The `cray artifacts` CLI can be used to list and download the files. Note that the `.psql` file contains the database dump and the `.manifest` file contains the secrets.
 
-    1. List the available backups.
+    1. List the available Postgres logical backups by date.
 
         ```bash
-        cray artifacts list postgres-backup --format json | jq -r '.artifacts[].Key | select(contains("spire"))'
+        cray artifacts list postgres-backup --format json | jq -r '.artifacts[] | select(.Key | contains("spilo/spire")) | "\(.LastModified) \(.Key)"'
         ```
 
         Example output:
 
         ```text
-        spire-postgres-2022-09-14T03:10:04.manifest
-        spire-postgres-2022-09-14T03:10:04.psql
+        2023-03-23T16:00:10.360000+00:00 spilo/spire-postgres/f5d7952e-b049-4bcf-ba7f-6357898bd617/logical_backups/1679676609.sql.gz
+        2023-03-24T16:00:11.010220+00:00 spilo/spire-postgres/f5d7952e-b049-4bcf-ba7f-6357898bd617/logical_backups/1679677088.sql.gz
         ```
 
-    1. Set the environment variables to the name of the backup files.
-
-        > In order to avoid a `kubectl cp` bug, the dump file will be downloaded with a slightly
-        > altered name (`:` characters replaced with `-` characters).
+    1. Set the environment variables to the name of the backup file.
 
         ```bash
-        MANIFEST=spire-postgres-2022-09-14T03:10:04.manifest
-        DUMPFILE_SRC=spire-postgres-2022-09-14T03:10:04.psql
-        DUMPFILE=${DUMPFILE_SRC//:/-}
+        BACKUP=spilo/spire-postgres/f5d7952e-b049-4bcf-ba7f-6357898bd617/logical_backups/1679677088.sql.gz
+        DUMPFILE=$(basename ${BACKUP})
         ```
 
     1. Download the backup files.
 
         ```bash
-        cray artifacts get postgres-backup "${DUMPFILE_SRC}" "${DUMPFILE}"
-        cray artifacts get postgres-backup "${MANIFEST}" "${MANIFEST}"
+        cray artifacts get postgres-backup "${BACKUP}" "./${DUMPFILE}"
         ```
 
 1. (`ncn-mw#`) Set helper variables.
@@ -101,7 +102,7 @@ In the event that the Spire Postgres cluster must be rebuilt and the data restor
 1. (`ncn-mw#`) Create a new single instance Spire Postgres cluster.
 
     ```bash
-    cp postgres-cr.json postgres-orig-cr.json
+    cp -v postgres-cr.json postgres-orig-cr.json
     jq '.spec.numberOfInstances = 1' postgres-orig-cr.json > postgres-cr.json
     kubectl create -f postgres-cr.json
     ```
@@ -137,72 +138,95 @@ In the event that the Spire Postgres cluster must be rebuilt and the data restor
 
     Errors such as `... already exists` can be ignored; the restore can be considered successful when it completes.
 
-1. Either update or re-create the `spire-postgres` secrets.
+1. Update the `spire-postgres` secrets in Postgres.
 
-   * Update the secrets in Postgres.
+    1. (`ncn-mw#`) From the four `spire-postgres` secrets, collect the password for each Postgres username:
+       `postgres`, `service_account`, `spire`, and `standby`.
 
-        If a manual dump was done, and the secrets were not saved, then the secrets in the newly created Postgres cluster will need to be updated.
+        ```bash
+        for secret in postgres.spire-postgres.credentials service-account.spire-postgres.credentials \
+                    spire.spire-postgres.credentials standby.spire-postgres.credentials
+        do
+            echo -n "secret ${secret} username & password: "
+            echo -n "`kubectl get secret "${secret}" -n "${NAMESPACE}" -ojsonpath='{.data.username}' | base64 -d` "
+            echo `kubectl get secret "${secret}" -n "${NAMESPACE}" -ojsonpath='{.data.password}'| base64 -d`
+        done
+        ```
 
-        1. (`ncn-mw#`) From the four `spire-postgres` secrets, collect the password for each Postgres username:
-           `postgres`, `service_account`, `spire`, and `standby`.
+        Example output:
 
-            ```bash
-            for secret in postgres.spire-postgres.credentials service-account.spire-postgres.credentials \
-                        spire.spire-postgres.credentials standby.spire-postgres.credentials
-            do
-                echo -n "secret ${secret} username & password: "
-                echo -n "`kubectl get secret "${secret}" -n "${NAMESPACE}" -ojsonpath='{.data.username}' | base64 -d` "
-                echo `kubectl get secret "${secret}" -n "${NAMESPACE}" -ojsonpath='{.data.password}'| base64 -d`
-            done
-            ```
+        ```text
+        secret postgres.spire-postgres.credentials username & password: postgres ABCXYZ
+        secret service-account.spire-postgres.credentials username & password: service_account ABC123
+        secret spire.spire-postgres.credentials username & password: spire XYZ123
+        secret standby.spire-postgres.credentials username & password: standby 123456
+        ```
 
-            Example output:
+    1. (`ncn-mw#`) `kubectl exec` into the Postgres pod.
 
-            ```text
-            secret postgres.spire-postgres.credentials username & password: postgres ABCXYZ
-            secret service-account.spire-postgres.credentials username & password: service_account ABC123
-            secret spire.spire-postgres.credentials username & password: spire XYZ123
-            secret standby.spire-postgres.credentials username & password: standby 123456
-            ```
+        ```bash
+        kubectl exec "${POSTGRESQL}-0" -n "${NAMESPACE}" -c postgres -it -- bash
+        ```
 
-        1. (`ncn-mw#`) `kubectl exec` into the Postgres pod.
+    1. (`pod#`) Open a Postgres console.
 
-            ```bash
-            kubectl exec "${POSTGRESQL}-0" -n "${NAMESPACE}" -c postgres -it -- bash
-            ```
+        ```bash
+        /usr/bin/psql postgres postgres
+        ```
 
-        1. (`pod#`) Open a Postgres console.
+    1. (`postgres#`) Update the password for each user to match the values found in the secrets.
 
-            ```bash
-            /usr/bin/psql postgres postgres
-            ```
-
-        1. (`postgres#`) Update the password for each user.
-
-            For example:
+        1. Update the password for the `postgres` user.
 
             ```console
             ALTER USER postgres WITH PASSWORD 'ABCXYZ';
-            ALTER ROLE
-            ALTER USER service_account WITH PASSWORD 'ABC123';
-            ALTER ROLE
-            ALTER USER spire WITH PASSWORD 'XYZ123';
-            ALTER ROLE
-            ALTER USER standby WITH PASSWORD '123456';
+            ```
+
+            Example of successful output:
+
+            ```text
             ALTER ROLE
             ```
 
-   * Re-create secrets in Kubernetes.
+        1. Update the password for the `service_account` user.
 
-        If the Postgres secrets were automatically backed up, then re-create the secrets in Kubernetes.
+            ```console
+            ALTER USER service_account WITH PASSWORD 'ABC123';
+            ```
 
-        (`ncn-mw#`) Delete and re-create the four `spire-postgres` secrets using the manifest that was copied from S3 in an earlier step.
+            Example of successful output:
 
-        ```bash
-        kubectl delete secret postgres.spire-postgres.credentials service-account.spire-postgres.credentials \
-            spire.spire-postgres.credentials standby.spire-postgres.credentials -n "${NAMESPACE}"
-        kubectl apply -f "${MANIFEST}"
-        ```
+            ```text
+            ALTER ROLE
+            ```
+
+        1. Update the password for the `spire` user.
+
+            ```console
+            ALTER USER spire WITH PASSWORD 'XYZ123';
+            ```
+
+            Example of successful output:
+
+            ```text
+            ALTER ROLE
+            ```
+
+        1. Update the password for the `standby` user.
+
+            ```console
+            ALTER USER standby WITH PASSWORD '123456';
+            ```
+
+            Example of successful output:
+
+            ```text
+            ALTER ROLE
+            ```
+
+    1. (`postgres#`) Exit the Postgres console with the `\q` command.
+
+    1. (`pod#`) Exit the Postgres pod with the `exit` command.
 
 1. (`ncn-mw#`) Restart the Postgres cluster.
 
@@ -302,8 +326,6 @@ In the event that the Keycloak Postgres cluster must be rebuilt and the data res
 ### Restore Postgres for Keycloak: Prerequisites
 
 * A dump of the database exists.
-* The Cray command line interface \(CLI\) tool is initialized and configured on the system.
-  * See [Configure the Cray CLI](../configure_cray_cli.md).
 
 ### Restore Postgres for Keycloak: Procedure
 
@@ -311,38 +333,45 @@ In the event that the Keycloak Postgres cluster must be rebuilt and the data res
 
     * If a manual dump of the database was taken, then check that the dump file exists in a location off the Postgres cluster. It will be needed in the steps below.
     * If the database is being automatically backed up, then the most recent version of the dump and the secrets should exist in the `postgres-backup` S3 bucket.
-    These will be needed in the steps below. List the files in the `postgres-backup` S3 bucket and if the files exist, download the dump and secrets out of the S3 bucket.
-    The `cray artifacts` CLI can be used list and download the files. Note that the `.psql` file contains the database dump and the .manifest file contains the secrets.
+      These will be needed in the steps below. List the files in the `postgres-backup` S3 bucket and if the files exist, download the dump and secrets out of the S3 bucket.
+      The `cray artifacts` CLI can be used to list and download the files. Note that the `.psql` file contains the database dump and the `.manifest` file contains the secrets.
 
-    1. List the available backups.
+    1. Set and export the `CRAY_CREDENTIALS` environment variable.
+
+       This will permit simple CLI operations that are needed to obtain the Keycloak backup file.
+       See [Authenticate an Account with the Command Line](../security_and_authentication/Authenticate_an_Account_with_the_Command_Line.md).
+
+    1. List the available Postgres logical backups by date.
 
         ```bash
-        cray artifacts list postgres-backup --format json | jq -r '.artifacts[].Key | select(contains("keycloak"))'
+        cray artifacts list postgres-backup --format json | jq -r '.artifacts[] | select(.Key | contains("spilo/keycloak")) | "\(.LastModified) \(.Key)"'
         ```
 
         Example output:
 
         ```text
-        keycloak-postgres-2022-09-14T02:10:05.manifest
-        keycloak-postgres-2022-09-14T02:10:05.psql
+        2023-03-23T02:10:11.158000+00:00 spilo/keycloak-postgres/ed8f6691-9da7-4662-aa67-9c786fa961ee/logical_backups/1679537409.sql.gz
+        2023-03-24T02:10:12.689000+00:00 spilo/keycloak-postgres/ed8f6691-9da7-4662-aa67-9c786fa961ee/logical_backups/1679623811.sql.gz
         ```
 
-    1. Set the environment variables to the name of the backup files.
-
-        > In order to avoid a `kubectl cp` bug, the dump file will be downloaded with a slightly
-        > altered name (`:` characters replaced with `-` characters).
+    1. Set the environment variables to the name of the backup file.
 
         ```bash
-        MANIFEST=keycloak-postgres-2022-09-14T02:10:05.manifest
-        DUMPFILE_SRC=keycloak-postgres-2022-09-14T02:10:05.psql
-        DUMPFILE=${DUMPFILE_SRC//:/-}
+        BACKUP=spilo/keycloak-postgres/ed8f6691-9da7-4662-aa67-9c786fa961ee/logical_backups/1679623811.sql.gz
+        DUMPFILE=$(basename ${BACKUP})
         ```
 
     1. Download the backup files.
 
         ```bash
-        cray artifacts get postgres-backup "${DUMPFILE_SRC}" "${DUMPFILE}"
-        cray artifacts get postgres-backup "${MANIFEST}" "${MANIFEST}"
+        cray artifacts get postgres-backup "${BACKUP}" "./${DUMPFILE}"
+        ```
+
+    1. Unset the `CRAY_CREDENTIALS` environment variable and remove the temporary token file.
+
+        ```bash
+        unset CRAY_CREDENTIALS
+        rm -v /tmp/setup-token.json
         ```
 
 1. (`ncn-mw#`) Set helper variables.
@@ -386,7 +415,7 @@ In the event that the Keycloak Postgres cluster must be rebuilt and the data res
 1. (`ncn-mw#`) Create a new single instance Keycloak Postgres cluster.
 
     ```bash
-    cp postgres-cr.json postgres-orig-cr.json
+    cp -v postgres-cr.json postgres-orig-cr.json
     jq '.spec.numberOfInstances = 1' postgres-orig-cr.json > postgres-cr.json
     kubectl create -f postgres-cr.json
     ```
@@ -422,69 +451,82 @@ In the event that the Keycloak Postgres cluster must be rebuilt and the data res
 
     Errors such as `... already exists` can be ignored; the restore can be considered successful when it completes.
 
-1. Either update or re-create the `keycloak-postgres` secrets.
+1. Update the `keycloak-postgres` secrets in Postgres.
 
-   * Update the secrets in Postgres.
+    1. (`ncn-mw#`) From the three `keycloak-postgres` secrets, collect the password for each Postgres username:
+       `postgres`, `service_account`, and `standby`.
 
-        If a manual dump was done, and the secrets were not saved, then the secrets in the newly created Postgres cluster will need to be updated.
+        ```bash
+        for secret in postgres.keycloak-postgres.credentials service-account.keycloak-postgres.credentials \
+            standby.keycloak-postgres.credentials
+        do
+            echo -n "secret ${secret} username & password: "
+            echo -n "`kubectl get secret "${secret}" -n "${NAMESPACE}" -ojsonpath='{.data.username}' | base64 -d` "
+            echo `kubectl get secret "${secret}" -n "${NAMESPACE}" -ojsonpath='{.data.password}'| base64 -d`
+        done
+        ```
 
-        1. (`ncn-mw#`) From the three `keycloak-postgres` secrets, collect the password for each Postgres username:
-           `postgres`, `service_account`, and `standby`.
+        Example output:
 
-            ```bash
-            for secret in postgres.keycloak-postgres.credentials service-account.keycloak-postgres.credentials \
-                standby.keycloak-postgres.credentials
-            do
-                echo -n "secret ${secret} username & password: "
-                echo -n "`kubectl get secret "${secret}" -n "${NAMESPACE}" -ojsonpath='{.data.username}' | base64 -d` "
-                echo `kubectl get secret "${secret}" -n "${NAMESPACE}" -ojsonpath='{.data.password}'| base64 -d`
-            done
-            ```
+        ```text
+        secret postgres.keycloak-postgres.credentials username & password: postgres ABCXYZ
+        secret service-account.keycloak-postgres.credentials username & password: service_account ABC123
+        secret standby.keycloak-postgres.credentials username & password: standby 123456
+        ```
 
-            Example output:
+    1. (`ncn-mw#`) `kubectl exec` into the Postgres pod.
 
-            ```text
-            secret postgres.keycloak-postgres.credentials username & password: postgres ABCXYZ
-            secret service-account.keycloak-postgres.credentials username & password: service_account ABC123
-            secret standby.keycloak-postgres.credentials username & password: standby 123456
-            ```
+        ```bash
+        kubectl exec "${POSTGRESQL}-0" -n "${NAMESPACE}" -c postgres -it -- bash
+        ```
 
-        1. (`ncn-mw#`) `kubectl exec` into the Postgres pod.
+    1. (`pod#`) Open a Postgres console.
 
-            ```bash
-            kubectl exec "${POSTGRESQL}-0" -n "${NAMESPACE}" -c postgres -it -- bash
-            ```
+        ```bash
+        /usr/bin/psql postgres postgres
+        ```
 
-        1. (`pod#`) Open a Postgres console.
+    1. (`postgres#`) Update the password for each user to match the values found in the secrets.
 
-            ```bash
-            /usr/bin/psql postgres postgres
-            ```
-
-        1. (`postgres#`) Update the password for each user.
-
-            For example:
+        1. Update the password for the `postgres` user.
 
             ```console
             ALTER USER postgres WITH PASSWORD 'ABCXYZ';
-            ALTER ROLE
-            ALTER USER service_account WITH PASSWORD 'ABC123';
-            ALTER ROLE
-            ALTER USER standby WITH PASSWORD '123456';
+            ```
+
+            Example of successful output:
+
+            ```text
             ALTER ROLE
             ```
 
-   * Re-create secrets in Kubernetes.
+        1. Update the password for the `service_account` user.
 
-        If the Postgres secrets were automatically backed up, then re-create the secrets in Kubernetes.
+            ```console
+            ALTER USER service_account WITH PASSWORD 'ABC123';
+            ```
 
-        (`ncn-mw#`) Delete and re-create the three `keycloak-postgres` secrets using the manifest that was copied from S3 earlier.
+            Example of successful output:
 
-        ```bash
-        kubectl delete secret postgres.keycloak-postgres.credentials \
-            service-account.keycloak-postgres.credentials standby.keycloak-postgres.credentials -n "${NAMESPACE}"
-        kubectl apply -f "${MANIFEST}"
-        ```
+            ```text
+            ALTER ROLE
+            ```
+
+        1. Update the password for the `standby` user.
+
+            ```console
+            ALTER USER standby WITH PASSWORD '123456';
+            ```
+
+            Example of successful output:
+
+            ```text
+            ALTER ROLE
+            ```
+
+    1. (`postgres#`) Exit the Postgres console with the `\q` command.
+
+    1. (`pod#`) Exit the Postgres pod with the `exit` command.
 
 1. (`ncn-mw#`) Restart the Postgres cluster.
 
@@ -653,38 +695,33 @@ In the event that the VCS Postgres cluster must be rebuilt and the data restored
 
     * If a manual dump of the database was taken, then check that the dump file exists in a location off the Postgres cluster. It will be needed in the steps below.
     * If the database is being automatically backed up, then the most recent version of the dump and the secrets should exist in the `postgres-backup` S3 bucket.
-    These will be needed in the steps below. List the files in the `postgres-backup` S3 bucket and if the files exist, download the dump and secrets out of the S3 bucket.
-    The `cray artifacts` CLI can be used list and download the files. Note that the `.psql` file contains the database dump and the .manifest file contains the secrets.
+      These will be needed in the steps below. List the files in the `postgres-backup` S3 bucket and if the files exist, download the dump and secrets out of the S3 bucket.
+      The `cray artifacts` CLI can be used to list and download the files. Note that the `.psql` file contains the database dump and the `.manifest` file contains the secrets.
 
     1. List the available backups.
 
         ```bash
-        cray artifacts list postgres-backup --format json | jq -r '.artifacts[].Key | select(contains("vcs"))'
+        cray artifacts list postgres-backup --format json | jq -r '.artifacts[] | select(.Key | contains("spilo/gitea")) | "\(.LastModified) \(.Key)"'
         ```
 
         Example output:
 
         ```text
-        gitea-vcs-postgres-2022-09-14T01:10:04.manifest
-        gitea-vcs-postgres-2022-09-14T01:10:04.psql
+        2023-03-22T01:10:26.475500+00:00 spilo/gitea-vcs-postgres/9b8df946-ef39-4880-86a7-f8c21b71c542/logical_backups/1679447424.sql.gz
+        2023-03-23T01:10:26.395000+00:00 spilo/gitea-vcs-postgres/9b8df946-ef39-4880-86a7-f8c21b71c542/logical_backups/1688548424.sql.gz
         ```
 
-    1. Set the environment variables to the name of the backup files.
-
-        > In order to avoid a `kubectl cp` bug, the dump file will be downloaded with a slightly
-        > altered name (`:` characters replaced with `-` characters).
+    1. Set the environment variables to the name of the backup file.
 
         ```bash
-        MANIFEST=gitea-vcs-postgres-2022-09-14T01:10:04.manifest
-        DUMPFILE_SRC=gitea-vcs-postgres-2022-09-14T01:10:04.psql
-        DUMPFILE=${DUMPFILE_SRC//:/-}
+        BACKUP=spilo/gitea-vcs-postgres/9b8df946-ef39-4880-86a7-f8c21b71c542/logical_backups/1688548424.sql.gz
+        DUMPFILE=$(basename ${BACKUP})
         ```
 
     1. Download the backup files.
 
         ```bash
-        cray artifacts get postgres-backup "${DUMPFILE_SRC}" "${DUMPFILE}"
-        cray artifacts get postgres-backup "${MANIFEST}" "${MANIFEST}"
+        cray artifacts get postgres-backup "${BACKUP}" "./${DUMPFILE}"
         ```
 
 1. (`ncn-mw#`) Set helper variables.
@@ -729,7 +766,7 @@ In the event that the VCS Postgres cluster must be rebuilt and the data restored
 1. (`ncn-mw#`) Create a new single instance VCS Postgres cluster.
 
     ```bash
-    cp postgres-cr.json postgres-orig-cr.json
+    cp -v postgres-cr.json postgres-orig-cr.json
     jq '.spec.numberOfInstances = 1' postgres-orig-cr.json > postgres-cr.json
     kubectl create -f postgres-cr.json
     ```
@@ -760,74 +797,87 @@ In the event that the VCS Postgres cluster must be rebuilt and the data restored
 1. (`ncn-mw#`) Restore the data.
 
     ```bash
-    kubectl exec "${SERVICE}-0" -c postgres -n services -it -- psql -U postgres < "${DUMPFILE}"
+    kubectl exec "${POSTGRESQL}-0" -c postgres -n services -it -- psql -U postgres < "${DUMPFILE}"
     ```
 
     Errors such as `... already exists` can be ignored; the restore can be considered successful when it completes.
 
-1. Either update or re-create the `gitea-vcs-postgres` secrets.
+1. Update the `gitea-vcs-postgres` secrets in Postgres.
 
-   * Update the secrets in Postgres.
+    1. (`ncn-mw#`) From the three `gitea-vcs-postgres` secrets, collect the password for each Postgres username:
+       `postgres`, `service_account`, and `standby`.
 
-        If a manual dump was done, and the secrets were not saved, then the secrets in the newly created Postgres cluster will need to be updated.
+        ```bash
+        for secret in postgres.gitea-vcs-postgres.credentials service-account.gitea-vcs-postgres.credentials \
+            standby.gitea-vcs-postgres.credentials
+        do
+            echo -n "secret ${secret} username & password: "
+            echo -n "`kubectl get secret "${secret}" -n "${NAMESPACE}" -ojsonpath='{.data.username}' | base64 -d` "
+            echo `kubectl get secret "${secret}" -n "${NAMESPACE}" -ojsonpath='{.data.password}'| base64 -d`
+        done
+        ```
 
-        1. (`ncn-mw#`) From the three `gitea-vcs-postgres` secrets, collect the password for each Postgres username:
-           `postgres`, `service_account`, and `standby`.
+        Example output:
 
-            ```bash
-            for secret in postgres.gitea-vcs-postgres.credentials service-account.gitea-vcs-postgres.credentials \
-                standby.gitea-vcs-postgres.credentials
-            do
-                echo -n "secret ${secret} username & password: "
-                echo -n "`kubectl get secret "${secret}" -n "${NAMESPACE}" -ojsonpath='{.data.username}' | base64 -d` "
-                echo `kubectl get secret "${secret}" -n "${NAMESPACE}" -ojsonpath='{.data.password}'| base64 -d`
-            done
-            ```
+        ```text
+        secret postgres.gitea-vcs-postgres.credentials username & password: postgres ABCXYZ
+        secret service-account.gitea-vcs-postgres.credentials username & password: service_account ABC123
+        secret standby.gitea-vcs-postgres.credentials username & password: standby 123456
+        ```
 
-            Example output:
+    1. (`ncn-mw#`) `kubectl exec` into the Postgres pod.
 
-            ```text
-            secret postgres.gitea-vcs-postgres.credentials username & password: postgres ABCXYZ
-            secret service-account.gitea-vcs-postgres.credentials username & password: service_account ABC123
-            secret standby.gitea-vcs-postgres.credentials username & password: standby 123456
-            ```
+        ```bash
+        kubectl exec "${POSTGRESQL}-0" -n "${NAMESPACE}" -c postgres -it -- bash
+        ```
 
-        1. (`ncn-mw#`) `kubectl exec` into the Postgres pod.
+    1. (`pod#`) Open a Postgres console.
 
-            ```bash
-            kubectl exec "${POSTGRESQL}-0" -n "${NAMESPACE}" -c postgres -it -- bash
-            ```
+        ```bash
+        /usr/bin/psql postgres postgres
+        ```
 
-        1. (`pod#`) Open a Postgres console.
+    1. (`postgres#`) Update the password for each user to match the values found in the secrets.
 
-            ```bash
-            /usr/bin/psql postgres postgres
-            ```
-
-        1. (`postgres#`) Update the password for each user.
-
-            For example:
+        1. Update the password for the `postgres` user.
 
             ```console
             ALTER USER postgres WITH PASSWORD 'ABCXYZ';
-            ALTER ROLE
-            ALTER USER service_account WITH PASSWORD 'ABC123';
-            ALTER ROLE
-            ALTER USER standby WITH PASSWORD '123456';
+            ```
+
+            Example of successful output:
+
+            ```text
             ALTER ROLE
             ```
 
-   * Re-create secrets in Kubernetes.
+        1. Update the password for the `service_account` user.
 
-        If the Postgres secrets were auto-backed up, then re-create the secrets in Kubernetes.
+            ```console
+            ALTER USER service_account WITH PASSWORD 'ABC123';
+            ```
 
-        (`ncn-mw#`) Delete and re-create the three `gitea-vcs-postgres` secrets using the manifest that was copied from S3 earlier.
+            Example of successful output:
 
-        ```bash
-        kubectl delete secret postgres.gitea-vcs-postgres.credentials \
-            service-account.gitea-vcs-postgres.credentials standby.gitea-vcs-postgres.credentials -n services
-        kubectl apply -f "${MANIFEST}"
-        ```
+            ```text
+            ALTER ROLE
+            ```
+
+        1. Update the password for the `standby` user.
+
+            ```console
+            ALTER USER standby WITH PASSWORD '123456';
+            ```
+
+            Example of successful output:
+
+            ```text
+            ALTER ROLE
+            ```
+
+    1. (`postgres#`) Exit the Postgres console with the `\q` command.
+
+    1. (`pod#`) Exit the Postgres pod with the `exit` command.
 
 1. (`ncn-mw#`) Restart the Postgres cluster.
 

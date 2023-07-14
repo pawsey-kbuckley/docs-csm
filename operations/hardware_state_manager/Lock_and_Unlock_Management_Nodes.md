@@ -5,31 +5,38 @@ The ability to ignore non-compute nodes (NCNs) is turned off by default. Managem
 This section only covers using locks with the Hardware State Manager (HSM). For more information
 on ignoring nodes, refer to the following sections:
 
-* Firmware Action Service (FAS): See [Ignore Node within FAS](../firmware/FAS_Admin_Procedures.md#ignore-nodes-within-fas).
+* Firmware Action Service (FAS): See [Ignore Node within FAS](../firmware/FAS_Admin_Procedures.md#ignore-management-nodes-within-fas).
 * Cray Advanced Platform Monitoring and Control (CAPMC): See [Ignore Nodes with CAPMC](../power_management/Ignore_Nodes_with_CAPMC.md)
 
 The following actions can be prevented when a node and its BMC is locked.
 
 * Firmware upgrades with FAS
-* Power off operations with CAPMC
-* Reset operations with CAPMC
+* Power off operations with PCS/CAPMC
+* Reset operations with PCS/CAPMC
 
 Doing any of these actions by accident will shut down a management node. If the node is a Kubernetes master or worker
 node, this can have serious negative effects on system operations. If a single node is taken down by mistake, it is
 possible that services will recover. If all management nodes are taken down, or all Kubernetes worker nodes are taken down by mistake, the system must be restarted.
 
-After critical nodes are locked, power/reset (CAPMC) or firmware (FAS) operations cannot affect the nodes unless
+After critical nodes are locked, power/reset (PCS/CAPMC) or firmware (FAS) operations cannot affect the nodes unless
 they are unlocked. For example, any locked node that is included in a list of nodes to be reset will result in a
 failure.
 
 ## Topics
 
-* [When To Lock Management Nodes](#when-to-lock-management-nodes)
-* [When To Unlock Management Nodes](#when-to-unlock-management-nodes)
-* [How To Lock Management Nodes](#how-to-lock-management-nodes)
-  * [Script](#script)
-  * [Manual Steps](#manual-steps)
-* [How To Unlock Management Nodes](#how-to-unlock-management-nodes)
+* [Lock and Unlock Management Nodes](#lock-and-unlock-management-nodes)
+  * [Topics](#topics)
+  * [When To Lock Management Nodes](#when-to-lock-management-nodes)
+  * [When To Unlock Management Nodes](#when-to-unlock-management-nodes)
+  * [How To Lock Management Nodes](#how-to-lock-management-nodes)
+    * [Script](#script)
+      * [Manual Steps](#manual-steps)
+      * [To lock all nodes (and their BMCs) with the _Management_ role](#to-lock-all-nodes-and-their-bmcs-with-the-management-role)
+      * [To lock single nodes or lists of specific nodes (and their BMCs)](#to-lock-single-nodes-or-lists-of-specific-nodes-and-their-bmcs)
+  * [How To Check For Locked Management Nodes](#how-to-check-for-locked-management-nodes)
+  * [How To Unlock Management Nodes](#how-to-unlock-management-nodes)
+    * [To unlock all nodes (and their BMCs) with the _Management_ role](#to-unlock-all-nodes-and-their-bmcs-with-the-management-role)
+    * [To unlock single or lists of specific nodes (and their BMCs)](#to-unlock-single-or-lists-of-specific-nodes-and-their-bmcs)
 
 ## When To Lock Management Nodes
 
@@ -132,6 +139,124 @@ Use the `cray hsm locks lock` command to perform locking.
 
    [Success]
    ComponentIDs = [ "x3000c0s6b0n0", "x3000c0s6b0",]
+   ```
+
+## How To Check For Locked Management Nodes
+
+   > **`NOTE`** The BMC of `ncn-m001` typically does not exist in HSM under HSM State Components, and therefore would not show up in the following command output.
+
+1. Check the lock status of the management nodes and BMCs.
+
+   ```bash
+   cray hsm state components list --type Node --role Management --format json | \
+      jq -c '.Components[]|.ID' | tr '\n' ',' | sed 's/,$/\n/' | \
+      xargs cray hsm locks status create --format toml --component-ids
+   ```
+
+   Example output:
+
+   ```text
+   [[Components]]
+   ID = "x3000c0s1b0n0"
+   Locked = true
+   Reserved = false
+   ReservationDisabled = false
+
+   [[Components]]
+   ID = "x3000c0s5b0n0"
+   Locked = true
+   Reserved = false
+   ReservationDisabled = false
+
+   [[Components]]
+   ID = "x3000c0s4b0n0"
+   Locked = true
+   Reserved = false
+   ReservationDisabled = false
+
+   [[Components]]
+   ID = "x3000c0s7b0n0"
+   Locked = true
+   Reserved = false
+   ReservationDisabled = false
+
+   [[Components]]
+   ID = "x3000c0s6b0n0"
+   Locked = true
+   Reserved = false
+   ReservationDisabled = false
+
+   [[Components]]
+   ID = "x3000c0s3b0n0"
+   Locked = true
+   Reserved = false
+   ReservationDisabled = false
+
+   [[Components]]
+   ID = "x3000c0s3b0n0"
+   Locked = true
+   Reserved = false
+   ReservationDisabled = false
+
+   [[Components]]
+   ID = "x3000c0s9b0n0"
+   Locked = true
+   Reserved = false
+   ReservationDisabled = false
+
+   [[Components]]
+   ID = "x3000c0s8b0n0"
+   Locked = true
+   Reserved = false
+   ReservationDisabled = false
+
+   [[Components]]
+   ID = "x3000c0s5b0"
+   Locked = true
+   Reserved = false
+   ReservationDisabled = false
+
+   [[Components]]
+   ID = "x3000c0s4b0"
+   Locked = true
+   Reserved = false
+   ReservationDisabled = false
+
+   [[Components]]
+   ID = "x3000c0s7b0"
+   Locked = true
+   Reserved = false
+   ReservationDisabled = false
+
+   [[Components]]
+   ID = "x3000c0s6b0"
+   Locked = true
+   Reserved = false
+   ReservationDisabled = false
+
+   [[Components]]
+   ID = "x3000c0s3b0"
+   Locked = true
+   Reserved = false
+   ReservationDisabled = false
+
+   [[Components]]
+   ID = "x3000c0s3b0"
+   Locked = true
+   Reserved = false
+   ReservationDisabled = false
+
+   [[Components]]
+   ID = "x3000c0s9b0"
+   Locked = true
+   Reserved = false
+   ReservationDisabled = false
+
+   [[Components]]
+   ID = "x3000c0s8b0"
+   Locked = true
+   Reserved = false
+   ReservationDisabled = false
    ```
 
 ## How To Unlock Management Nodes

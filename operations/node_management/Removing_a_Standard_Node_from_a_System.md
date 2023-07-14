@@ -8,7 +8,7 @@ This procedure is applicable for the following types of standard rack nodes:
 * Dual node chassis (Apollo 6500 XL645d, etc...)
 * Quad dense node chassis (Gigabyte compute node chassis)
 
-## Perquisites
+## Prerequisites
 
 * The Cray command line interface \(CLI\) tool is initialized and configured on the system. See [Configure the Cray CLI](../configure_cray_cli.md).
 * Knowledge of whether Data Virtualization Service (DVS) is operating over the Node Management Network (NMN) or the High Speed Network (HSN).
@@ -42,7 +42,7 @@ This procedure is applicable for the following types of standard rack nodes:
 
     ```bash
     BOS_TEMPLATE=cos-2.0.30-slurm-healthy-compute
-    cray bos session create --template-uuid $BOS_TEMPLATE --operation shutdown --limit x9000c3s0b0n0,x9000c3s0b0n1,x9000c3s0b1n0,x9000c3s0b1n1
+    cray bos v1 session create --template-uuid $BOS_TEMPLATE --operation shutdown --limit x9000c3s0b0n0,x9000c3s0b0n1,x9000c3s0b1n0,x9000c3s0b1n1
     ```
 
 ### Step 3: Remove Data from SLS and HSM

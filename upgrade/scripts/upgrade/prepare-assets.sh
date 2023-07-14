@@ -2,7 +2,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2022-2023 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -90,7 +90,9 @@ if [[ -z ${TARBALL_FILE} ]]; then
 
     if [[ -z ${ENDPOINT} ]]; then
         # default endpoint to release.algol60.net
-        ENDPOINT=https://release.algol60.net/csm-1.4/csm/
+        # Example input: CSM_RELEASE=1.5.0-alpha.3
+        # Example output: ENDPOINT=https://release.algol60.net/csm-1.5/csm/
+        ENDPOINT=https://release.algol60.net/csm-$(echo ${CSM_RELEASE} | cut -d'.' -f1,2)/csm/
         echo "Use internal endpoint: ${ENDPOINT}"
     fi
 
@@ -118,7 +120,7 @@ if [[ -z ${TARBALL_FILE} ]]; then
         touch /etc/cray/upgrade/csm/myenv
         echo "====> ${state_name} ..."
         {
-        wget --progress=dot:giga ${ENDPOINT}/${CSM_REL_NAME}.tar.gz -P /etc/cray/upgrade/csm/
+        wget --progress=dot:giga ${ENDPOINT}${CSM_REL_NAME}.tar.gz -P /etc/cray/upgrade/csm/
         # set TARBALL_FILE to newly downloaded file
         TARBALL_FILE=/etc/cray/upgrade/csm/${CSM_REL_NAME}.tar.gz
         } >> ${LOG_FILE} 2>&1
@@ -188,4 +190,3 @@ else
 fi
 
 ok_report
-

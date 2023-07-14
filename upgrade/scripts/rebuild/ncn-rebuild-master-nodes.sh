@@ -2,7 +2,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2021-2023 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -33,6 +33,19 @@ target_ncn=$1
 . ${basedir}/../common/ncn-common.sh ${target_ncn}
 
 ssh_keygen_keyscan $1
+
+# this assumes that CFS has made the CSM repos available on the NCN running this script
+state_name="ENSURE_CSI_IS_INSTALLED"
+state_recorded=$(is_state_recorded "${state_name}" ${target_ncn})
+if [[ $state_recorded == "0" ]]; then
+    echo "====> ${state_name} ..."
+    if ! command -v csi > /dev/null; then
+        zypper --non-interactive install cray-site-init
+    fi
+    record_state "${state_name}" ${target_ncn}
+else
+    echo "====> ${state_name} has been completed"
+fi
 
 # Back up local files and directories used by System Admin Toolkit (SAT)
 state_name="BACKUP_SAT_LOCAL_FILES"

@@ -54,12 +54,12 @@ The following table describes the hardware items that can have their firmware up
 Table 1. Upgradable Firmware Items
 
 | **Manufacturer** | **Type**     | **Target**                                                                          |
-| ---------------- | ------------ | ----------------------------------------------------------------------------------- |
-| Cray             | `nodeBMC`    | `BMC`, `Node0.BIOS`,  `Node1.BIOS`,  `Recovery`, `Node1.AccFPGA0`, `Node0.AccFPGA0` |
-| Cray             | `chassisBMC` | `BMC`, `Recovery`                                                                   |
-| Cray             | `routerBMC`  | `BMC`, `Recovery`                                                                   |
-| Gigabyte         | `nodeBMC`    | `BMC`, `BIOS`                                                                       |
-| HPE              | `nodeBMC`    | `iLO 5`, `System ROM` ,`Redundant System ROM`                                       |
+| ---------------- | ------------ | -------------------------------------------------------------------------------------------------------------|
+| Cray             | `nodeBMC`    | `BMC`, `Node[0-3].BIOS`,  `Recovery`, `Node[0-1].AccFPGA0`, `Node0.AccVBIOS`, `Node[0-3].ManagementEthernet` |
+| Cray             | `chassisBMC` | `BMC`, `Recovery`                                                                                            |
+| Cray             | `routerBMC`  | `BMC`, `Recovery`                                                                                            |
+| Gigabyte         | `nodeBMC`    | `BMC`, `BIOS`                                                                                                |
+| HPE              | `nodeBMC`    | `iLO 5`, `System ROM` ,`Redundant System ROM`                                                                |
 
 ## Order of operations
 
@@ -67,7 +67,7 @@ For each item in the `Hardware Precedence Order`:
 
 1. Complete a dry-run:
 
-   1. `cray fas actions create {jsonfile}`
+   1. `cray fas actions create {jsonfile}` **NEW**: The [`FASUpdate.py script`](FASUpdate_Script.md) can be used to perform default updates to firmware and BIOS.
    1. Note the `ActionID`.
    1. Poll the status of the action until the action `state` is `completed`:
       1. `cray fas actions describe {actionID} --format json`
@@ -91,7 +91,7 @@ For each item in the `Hardware Precedence Order`:
 1. If `succeeded` count is greater than zero, then perform a live update.
 
      1. Update the JSON file to set the `overrideDryrun` field to `true`.
-     1. `cray fas actions create {jsonfile}`
+     1. `cray fas actions create {jsonfile}` **NEW**: The [`FASUpdate.py script`](FASUpdate_Script.md) can be used to perform default updates to firmware and BIOS.
           1. Note the `ActionID`!
           1. Poll the status of the action until the action `state` is `completed`:
                1. `cray fas actions describe {actionID} --format json`

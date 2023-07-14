@@ -146,7 +146,7 @@ with system-specific customizations.
 
 #### Setup LDAP configuration
 
-> **`NOTE`** Skip past LDAP configuration to [here](#end-of-ldap-configuation) if there is no LDAP configuration at this time. If LDAP should be enabled later,
+> **`NOTE`** Skip past LDAP configuration to [here](#end-of-ldap-configuration) if there is no LDAP configuration at this time. If LDAP should be enabled later,
 > follow [Add LDAP User Federation](../operations/security_and_authentication/Add_LDAP_User_Federation.md) after installation.
 
 1. (`pit#`) Set environment variables for the LDAP server and its port.
@@ -401,7 +401,12 @@ with system-specific customizations.
    The Prometheus SNMP exporter needs to be configured with a list of management network switches to scrape metrics from in
    order to populate the System Health Service Grafana dashboards.
 
-   See [Prometheus SNMP Exporter](../operations/network/management_network/snmp_exporter_configs.md) for more information.
+   > ***NOTE*** that for the Prometheus SNMP exporter to work, SNMP needs to be configured on the management switches
+   and the username and password need to match both Vault and the matching sealed secret in customizations.yaml. See
+   the [Prometheus SNMP Exporter](../operations/network/management_network/snmp_exporter_configs.md) page for more
+   information and review the
+   [Adding SNMP Credentials to the System](../operations/network/management_network/snmp_exporter_configs.md#adding-snmp-credentials-to-the-system)
+   section for links to the relevant procedures.
 
 1. (`pit#`) Load the `zeromq` container image required by Sealed Secret Generators.
 

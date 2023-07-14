@@ -1,7 +1,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2022-2023 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -31,11 +31,34 @@ spec:
   templates:
 ### Main Steps ###
   - name: main
+    metrics:
+        prometheus:
+        - name: operation_counter
+          help: "Count of step execution by result status"
+          labels:
+            - key: "opname"
+              value: "ims-upload"
+            - key: stage
+              value: "deliver-product"
+            - key: type
+              value: "product"
+            - key: pname
+              value: "{{=jsonpath(inputs.parameters.global_params, '$.product_manifest.current_product.manifest.name')}}"
+            - key: pversion
+              value: "{{=jsonpath(inputs.parameters.global_params, '$.product_manifest.current_product.manifest.version')}}"
+            - key: status
+              value: "{{status}}"
+          counter:
+            value: "1"
     inputs:
       parameters:
       - name: auth_token
       - name: global_params
     steps:
+    - - name: start-operation
+        templateRef:
+          name: workflow-template-record-time-template
+          template: record-time-template
     - - name: get-s3-secrets
         template: get-s3-secrets-template
     - - name: ims-upload-content
@@ -67,6 +90,60 @@ spec:
             value: "{{=jsonpath(inputs.parameters.global_params, '$.product_manifest.current_product.manifest.version')}}"
           - name: yaml-content
             value: "{{steps.ims-upload-content.outputs.parameters.ims_records}}"
+    - - name: end-operation
+        templateRef:
+          name: workflow-template-record-time-template
+          template: record-time-template
+    - - name:  prom-metrics
+        template: prom-metrics
+        arguments:
+          parameters:
+          - name: opstart
+            value: "{{steps.start-operation.outputs.result}}"
+          - name: opend
+            value: "{{steps.end-operation.outputs.result}}"
+          - name: pdname
+            value: "{{=jsonpath(inputs.parameters.global_params, '$.product_manifest.current_product.manifest.name')}}"
+          - name: pdversion
+            value: "{{=jsonpath(inputs.parameters.global_params, '$.product_manifest.current_product.manifest.version')}}"
+  - name: prom-metrics
+    inputs:
+      parameters:
+      - name: opstart
+      - name: opend
+      - name: pdname
+      - name: pdversion
+    metrics:
+      prometheus:
+        - name: operation_time
+          help: "Duration gauge by operation name in seconds"
+          labels:
+            - key: opname
+              value: "ims-upload"
+            - key: stage
+              value: "deliver-product"
+            - key: type
+              value: "product"
+            - key: pdname
+              value: "{{inputs.parameters.pdname}}"
+            - key: pdversion
+              value: "{{inputs.parameters.pdversion}}"
+            - key: opstart
+              value: "{{inputs.parameters.opstart}}"
+            - key: opend
+              value: "{{inputs.parameters.opend}}"
+          gauge:
+            value: "{{outputs.parameters.diff-time-value}}"
+    outputs:
+      parameters:
+        - name: diff-time-value
+          globalName: diff-time-value
+          valueFrom:
+            path: /tmp/diff_time.txt
+    container:
+      image: artifactory.algol60.net/csm-docker/stable/docker.io/alpine/git:2.32.0
+      command: [sh, -c]
+      args: ["DIFF_TIME=$(expr {{inputs.parameters.opend}} - {{inputs.parameters.opstart}}); echo $DIFF_TIME; echo $DIFF_TIME > /tmp/diff_time.txt"]
 ### Templates ###
 ## get-s3-secrets-template ##
   - name: get-s3-secrets-template
@@ -99,8 +176,9 @@ spec:
           source_ns="$2"
           destination_name="$3-$RANDOM"
           destination_ns="$4"
-          if kubectl get $item_name -n $source_ns &> /dev/null; then
-            echo "Syncing $item_name from $source_ns to $destination_ns as $destination_name"
+          result=$(kubectl get $item_name -n $source_ns 2>&1)
+          if [ $? -eq 0 ]; then
+            echo "DEBUG Syncing $item_name from $source_ns to $destination_ns as $destination_name"
             kubectl get $item_name -n $source_ns -o json | \
               jq 'del(.metadata.namespace)' | \
               jq 'del(.metadata.creationTimestamp)' | \
@@ -111,9 +189,15 @@ spec:
               jq 'del(.metadata.name)' | \
               jq '.metadata |= . + {"name":"'$destination_name'"}' | \
               kubectl apply -n $destination_ns -f -
-              return $?
+              rc=$?
+              if [ $rc -ne 0 ]; then
+                echo "ERROR Failed to create secret $destination_name in $destination_ns namespace from $item_name in $source_ns namespace"
+              fi
+              return $rc
           else
-            echo "Didn't find $item_name in the $source_ns namespace"
+            echo "ERROR $item_name not found in $source_ns namespace"
+            result=$(echo "$result" | sed -e 's/^/DEBUG /')
+            echo -e "DEBUG <kubectl get $item_name -n $source_ns> failed with\n\n$result"
             return 1
           fi
         }
@@ -145,13 +229,13 @@ spec:
       - name: ims_records
         valueFrom:
           path: /results/records.yaml
-        default: ""
+          default: "{}"
 
     container:
-      # replace image with standard ims-load-artifacts once PR is merged
-      image: registry.local/artifactory.algol60.net/artifactory/csm-docker/stable/cray-ims-load-artifacts:2.0.0
-      command: ['python3']
-      args: ['-m', 'ims_load_artifacts.load_artifacts']
+      image: artifactory.algol60.net/csm-docker/stable/cray-ims-load-artifacts:2.6.0
+      command:
+        - "/bin/sh"
+      args: ["-c", "/ims_load_artifacts/argo_entrypoint.sh"]
       env:
       - name: LOG_LEVEL
         value: INFO
@@ -188,17 +272,16 @@ spec:
       - name: IUF_RELEASE_PATH
         value: "{{inputs.parameters.iuf_release_mount_path}}"
       volumeMounts:
-      - name: certs # mount cluster certs to ca-certificates.crt for curl/http libraries
-        mountPath: /etc/ssl/certs/ca-certificates.crt
-        subPath: platform-ca-certs.crt
+      - name: certs
+        mountPath: /usr/local/share/ca-certificates
       - name: results
         mountPath: /results
       - name: release-distribution
         mountPath: "{{inputs.parameters.iuf_release_mount_path}}"
     volumes:
     - name: certs
-      hostPath:
-        path: /etc/pki/trust/anchors
+      configMap:
+        name: cray-configmap-ca-public-key
     - name: release-distribution
       hostPath:
         path: "{{inputs.parameters.iuf_release_mount_path}}"
@@ -223,4 +306,11 @@ spec:
       image: registry.local/artifactory.algol60.net/csm-docker/stable/docker.io/portainer/kubectl-shell:latest-v1.21.1-amd64
       command: [bash]
       source: |
-        kubectl -n argo delete secret/{{inputs.parameters.s3_credentials_secret_name}}
+        s3_secret_name={{inputs.parameters.s3_credentials_secret_name}}
+        echo "DEBUG Deleting secret $s3_secret_name from argo workspace"
+        result=$(kubectl -n argo delete secret/$s3_secret_name 2>&1)
+        if [ $? -ne 0 ]; then
+          result=$(echo "$result" | sed -e 's/^/DEBUG /')
+          echo "ERROR Deleting secret $s3_secret_name failed in argo namespace"
+          echo -e "DEBUG <kubectl -n argo delete secret/$s3_secret_name> failed with\n\n$result"
+        fi

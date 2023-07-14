@@ -6,6 +6,8 @@ This section applies to all node types. The commands in this section assume the 
 
 ## Procedure
 
+(`ncn-m001#`) The following steps can all be done on `ncn-m001`.
+
 1. Generate the BSS boot parameters JSON file.
 
    Run the following commands from a node that has `cray` CLI initialized:
@@ -57,4 +59,4 @@ This section applies to all node types. The commands in this section assume the 
 
 ## Next Step
 
-Proceed to the next step to [Power Cycle and Rebuild Nodes](Power_Cycle_and_Rebuild_Nodes.md). Otherwise, return to the main [Rebuild NCNs](Rebuild_NCNs.md) page.
+If executing this procedure as part of an NCN rebuild, return to the main [Rebuild NCNs](Rebuild_NCNs.md#storage-node) page and proceed with the next step.

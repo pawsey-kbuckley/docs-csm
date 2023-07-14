@@ -3,7 +3,8 @@
 > **`NOTE`** This section is for BOS V2 only.
 
 <!-- -->
-> **`NOTE`** This feature is the replacement for CRUS, which was deprecated in CSM 1.2.0.
+> **`NOTE`** This feature is the replacement for the Compute Rolling Upgrade Service (CRUS). CRUS was deprecated in CSM 1.2.0 and removed in CSM 1.5.0.
+> See [Deprecated Features](../../introduction/deprecated_features/README.md).
 
 BOS V2 allows users to stage boot artifacts, configuration, and an operation such as a reboot.
 The workload manager can later trigger the operation through BOS to apply that staged information, allowing rolling updates when nodes have no job running on them.
@@ -26,7 +27,22 @@ BOS then copies the information staged for these components into their desired s
 
 ## Using staged sessions with Slurm
 
-Slurm can be configured to call a reboot script using the `RebootProgram` value in the `slurm.conf` file.
+HPE provides the `slurm-reboot.py` script which will call BOS to apply a staged session.
+This featured was introduced with Slurm 1.2.5 for CPE 22.10.
+Slurm can be configured to call this reboot script using the `RebootProgram` value in the `slurm.conf` file.
+
+``` text
+SlurmctldParameters=reboot_from_controller
+RebootProgram=/slurm-reboot.py
+```
+
 See the [Slurm documentation](https://slurm.schedmd.com/slurm.conf.html#OPT_RebootProgram) for more information on configuring this value.
+
 Once this configuration is in place and a staged session has been created, admins can issue a `scontrol reboot` command to Slurm.
 Slurm will then use the reboot script to call the BOS `applystaged` endpoint.
+
+(`uan#`) A sample reboot command:
+
+``` bash
+scontrol reboot nextstate=Down Reason="Rolling Reboot" nid00000[6-7]
+```

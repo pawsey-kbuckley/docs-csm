@@ -1,7 +1,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2022-2023 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -29,6 +29,7 @@ metadata:
     after-each: "true"
 spec:
   scriptContent: |
-    ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null {{inputs.parameters.targetNcn}} \
+    #!/bin/sh
+    ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $TARGET_NCN \
       'source /srv/cray/scripts/metal/metal-lib.sh;install_csm_rpms'
   templateRefName: ssh-template

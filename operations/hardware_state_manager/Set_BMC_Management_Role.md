@@ -11,7 +11,7 @@ For more information on locking or ignoring nodes, refer to the following sectio
 * Hardware State Manager (HSM)
   * See [Lock and Unlock Nodes](Lock_and_Unlock_Management_Nodes.md).
 * Firmware Action Service (FAS)
-  * See [Ignore Node within FAS](../firmware/FAS_Admin_Procedures.md#ignore-nodes-within-fas).
+  * See [Ignore Node within FAS](../firmware/FAS_Admin_Procedures.md#ignore-management-nodes-within-fas).
 * Cray Advanced Platform Monitoring and Control (CAPMC)
   * See [Ignore Nodes with CAPMC](../power_management/Ignore_Nodes_with_CAPMC.md).
 
@@ -70,7 +70,7 @@ Use the `cray hsm state components bulkRole update` command to perform setting r
    Example output:
 
    ```text
-   x3000c0s5b0,x3000c0s4b0,x3000c0s7b0,x3000c0s6b0,x3000c0s3b0,x3000c0s2b0,x3000c0s9b0,x3000c0s8b0
+   x3000c0s1b0,x3000c0s2b0,x3000c0s3b0,x3000c0s6b0,x3000c0s5b0,x3000c0s4b0,x3000c0s7b0,x3000c0s8b0,x3000c0s9b0
    ```
 
 1. (`ncn-mw#`) Set the `Management` role for those BMCs.

@@ -2,7 +2,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2021-2023 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -157,6 +157,8 @@ function argo_err_report() {
     echo "${caller}"
     echo "${cmd}"
 
+    # in case we have left over temp files
+    rm -f /tmp/argo-res.* > /dev/null 2>&1 || true
 
     echo
     echo "[ERROR] - Unexpected errors"

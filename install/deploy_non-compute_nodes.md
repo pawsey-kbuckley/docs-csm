@@ -9,7 +9,7 @@ take place. Watching the console or the console log for certain nodes can help t
 what happens and when. When the process completes for all nodes, the Ceph storage is
 initialized and the Kubernetes cluster is created and ready for a workload. The PIT node
 will join Kubernetes after it is rebooted later in
-[Deploy Final NCN](README.md#4-deploy-final-ncn).
+[Deploy Final NCN](csm-install/README.md#4-deploy-final-ncn).
 
 ## Timing of deployments
 
@@ -26,9 +26,8 @@ the number of storage and worker nodes.
 1. [Deploy management nodes](#2-deploy-management-nodes)
     1. [Deploy storage NCNs](#21-deploy-storage-ncns)
     1. [Deploy Kubernetes NCNs](#22-deploy-kubernetes-ncns)
-    1. [Check LVM on Kubernetes NCNs](#23-check-lvm-on-kubernetes-ncns)
-1. [Cleanup](#3-cleanup)
-1. [Validate deployment](#4-validate-deployment)
+    1. [Configure `kubectl` on the PIT](#23-configure-kubectl-on-the-pit)
+1. [Validate deployment](#3-validate-deployment)
 1. [Next topic](#next-topic)
 
 ## 1. Prepare for management node deployment
@@ -135,8 +134,7 @@ for all nodes, the Ceph storage will have been initialized and the Kubernetes cl
 1. (`pit#`) Set each node to always UEFI network boot, and ensure that they are powered off.
 
     ```bash
-    grep -oP "(${mtoken}|${stoken}|${wtoken})" /etc/dnsmasq.d/statics.conf | sort -u | xargs -t -i ipmitool -I lanplus -U "${USERNAME}" -E -H {} chassis bootdev pxe options=persistent
-    grep -oP "(${mtoken}|${stoken}|${wtoken})" /etc/dnsmasq.d/statics.conf | sort -u | xargs -t -i ipmitool -I lanplus -U "${USERNAME}" -E -H {} chassis bootdev pxe options=efiboot
+    grep -oP "(${mtoken}|${stoken}|${wtoken})" /etc/dnsmasq.d/statics.conf | sort -u | xargs -t -i ipmitool -I lanplus -U "${USERNAME}" -E -H {} chassis bootdev pxe options=efiboot,persistent
     grep -oP "(${mtoken}|${stoken}|${wtoken})" /etc/dnsmasq.d/statics.conf | sort -u | xargs -t -i ipmitool -I lanplus -U "${USERNAME}" -E -H {} power off
     ```
 
@@ -162,6 +160,9 @@ for all nodes, the Ceph storage will have been initialized and the Kubernetes cl
     >
     > - Watch the storage node consoles carefully for error messages. If any are seen, consult [Ceph-CSI Troubleshooting](troubleshooting_ceph_csi.md).
     > - If the nodes have PXE boot issues (for example, getting PXE errors, or not pulling the `ipxe.efi` binary), then see [PXE boot troubleshooting](troubleshooting_pxe_boot.md).
+    > - If ncn-s001 console has the message 'Sleeping for five seconds waiting ceph to be healthy...'
+    for an extended period of time, then see [Utility Storage Installation Troubleshooting](troubleshooting_utility_storage_node_installation.md).
+    > - In the deployment of Storage NCN's the console may show errors regarding `cray-heartbeat.service`. These are expected until the PIT is deployed as m001.
 
 1. (`pit#`) Wait for storage nodes to output the following before booting Kubernetes master nodes and worker nodes.
 
@@ -186,7 +187,7 @@ for all nodes, the Ceph storage will have been initialized and the Kubernetes cl
     1. Determine the first Kubernetes master.
 
         ```bash
-        FM=$(cat "${PITDATA}"/configs/data.json | jq -r '."Global"."meta-data"."first-master-hostname"')
+        FM=$(jq -r '."Global"."meta-data"."first-master-hostname"' "${PITDATA}"/configs/data.json)
         echo ${FM}
         ```
 
@@ -242,94 +243,45 @@ for all nodes, the Ceph storage will have been initialized and the Kubernetes cl
 
     > **NOTE:** To exit a conman console, press `&` followed by a `.` (e.g. keystroke `&.`)
 
+### 2.3 Configure `kubectl` on the PIT
+
+1. (`pit#`) This was done in a previous step, but if the user is resuming/starting here then the first master needs to be
+    redefined.
+
+    > ***NOTE*** This requires that the [set reusable environment variables](./pre-installation.md#15-set-reusable-environment-variables) step
+    > was completed, `PITDATA` should be defined in the users environment before continuing.
+
+    ```bash
+    FM=$(jq -r '."Global"."meta-data"."first-master-hostname"' "${PITDATA}"/configs/data.json)
+    echo ${FM}
+    ```
+
 1. (`pit#`) Copy the Kubernetes configuration file from the first master node to the LiveCD.
 
    This will allow `kubectl` to work from the PIT node.
 
-   ```bash
-   mkdir -v ~/.kube
-   scp "${FM}.nmn:/etc/kubernetes/admin.conf" ~/.kube/config
-   ```
+    ```bash
+    mkdir -v ~/.kube
+    scp "${FM}.nmn:/etc/kubernetes/admin.conf" ~/.kube/config
+    ```
+
+## 3. Validate deployment
 
 1. (`pit#`) Ensure that the working directory is the `prep` directory.
 
-   ```bash
-   cd "${PITDATA}/prep"
-   ```
+    ```bash
+    cd "${PITDATA}/prep"
+    ```
 
 1. (`pit#`) Check cabling.
 
     See [SHCD check cabling guide](../operations/network/management_network/validate_cabling.md).
-
-### 2.3 Check LVM on Kubernetes NCNs
-
-Run the following command on the PIT node to validate that the expected LVM labels are present on disks on the master and worker nodes.
-
-```bash
-/usr/share/doc/csm/install/scripts/check_lvm.sh
-```
-
-Expected output looks similar to the following:
-
-```text
-When prompted, please enter the NCN password for ncn-m002
-Warning: Permanently added 'ncn-m002,10.252.1.11' (ECDSA) to the list of known hosts.
-Password:
-Checking ncn-m002...
-ncn-m002: OK
-Checking ncn-m003...
-Warning: Permanently added 'ncn-m003,10.252.1.10' (ECDSA) to the list of known hosts.
-Warning: Permanently added 'ncn-m003,10.252.1.10' (ECDSA) to the list of known hosts.
-ncn-m003: OK
-Checking ncn-w001...
-Warning: Permanently added 'ncn-w001,10.252.1.9' (ECDSA) to the list of known hosts.
-Warning: Permanently added 'ncn-w001,10.252.1.9' (ECDSA) to the list of known hosts.
-ncn-w001: OK
-Checking ncn-w002...
-Warning: Permanently added 'ncn-w002,10.252.1.8' (ECDSA) to the list of known hosts.
-Warning: Permanently added 'ncn-w002,10.252.1.8' (ECDSA) to the list of known hosts.
-ncn-w002: OK
-Checking ncn-w003...
-Warning: Permanently added 'ncn-w003,10.252.1.7' (ECDSA) to the list of known hosts.
-Warning: Permanently added 'ncn-w003,10.252.1.7' (ECDSA) to the list of known hosts.
-ncn-w003: OK
-SUCCESS: LVM checks passed on all master and worker NCNs
-```
-
-If the check fails, stop and:
-
-1. (`pit#`) Power cycle the node
-
-    ```bash
-    ipmitool -I lanplus -U "${USERNAME}" -E -H <node-in-question> power reset    
-    ```
-
-If the check fails after doing the rebuild, contact support.
-
-## 3. Cleanup
 
 1. (`pit#`) Install tests and test server on NCNs.
 
     ```bash
     "${CSM_PATH}"/lib/install-goss-tests.sh
     ```
-
-1. (`pit#`) Remove the default NTP pool.
-
-    This removes the default pool, which can cause contention issues with NTP.
-
-    ```bash
-    pdsh -b -S -w "$(grep -oP 'ncn-\w\d+' /etc/dnsmasq.d/statics.conf | grep -v m001 | sort -u |  tr -t '\n' ',')" \
-            'sed -i "s/^! pool pool\.ntp\.org.*//" /etc/chrony.conf' && echo SUCCESS
-    ```
-
-    Successful output is:
-
-    ```text
-    SUCCESS
-    ```
-
-## 4. Validate deployment
 
 1. (`pit#`) Check the storage nodes.
 
@@ -353,4 +305,4 @@ If the check fails after doing the rebuild, contact support.
 
 After completing the deployment of the management nodes, the next step is to install the CSM services.
 
-See [Install CSM Services](README.md#2-install-csm-services).
+See [Install CSM Services](csm-install/README.md#2-install-csm-services).

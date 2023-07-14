@@ -2,7 +2,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2022-2023 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,7 @@ function main() {
     upload_worker_rebuild_hooks
     upload_storage_rebuild_template
     upload_iuf_install_template
+    upload_templates
 }
 
 function upload_iuf_install_template {
@@ -38,6 +39,7 @@ function upload_iuf_install_template {
     kubectl -n argo delete configmap iuf-install-workflow-stages-files || true
     kubectl -n argo create configmap iuf-install-workflow-stages-files --from-file="${basedir}/../iuf/stages.yaml"
     kubectl -n argo apply -f "${basedir}/../iuf/operations" --recursive
+    kubectl -n argo apply -f "${basedir}/../iuf/hooks" --recursive
 }
 
 function upload_worker_rebuild_template {
@@ -47,6 +49,10 @@ function upload_worker_rebuild_template {
 
 function upload_worker_rebuild_hooks {
     kubectl -n argo apply -f "${basedir}/../ncn/hooks" --recursive
+}
+
+function upload_templates {
+    kubectl -n argo apply -f "${basedir}/../templates" --recursive
 }
 
 function upload_storage_rebuild_template {

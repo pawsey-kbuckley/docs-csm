@@ -14,13 +14,13 @@ BOS depends on each of the following services to complete its tasks:
 
 - Boot Script Service \(BSS\) - Stores the configuration information that is used to boot each hardware component. Nodes consult BSS for their boot artifacts and boot parameters when nodes boot or reboot.
 - Configuration Framework Service \(CFS\) - BOA launches CFS to apply configuration to the nodes in its boot sets \(node personalization\).
-- Cray Advanced Platform Monitoring and Control \(CAPMC\) - Used to power on and off the nodes.
+- Power Control Service \(PCS\) - Used to power nodes on and off, as well as query current power status.
 - Hardware State Manager \(HSM\) - Tracks the state of each node and what groups and roles nodes are included in.
 
 ## Use the BOS Cray CLI commands
 
 BOS commands are available using the Cray CLI.
-For ease of use, BOS can be used without specifying the version and will default to v1. However, explicitly specifying the version in scripts or documentation
+For ease of use, BOS can be used without specifying the version and will default to v2. However, explicitly specifying the version in scripts or documentation
 is **highly recommended**, because the default BOS version for the CLI may change in the future.
 
 (`ncn-mw#`) API information, including the default API version, can be found with the following command:

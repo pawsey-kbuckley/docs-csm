@@ -129,7 +129,7 @@ sw-spine-001 [standalone: master] # show run | include username
 
 ## Backup SNMP credentials
 
-For more information on SNMP credentials, see [Change SNMP Credentials on Leaf-BMC Switches](../../security_and_authentication/Change_SNMP_Credentials_on_Leaf_BMC_Switches.md) and [Update Default Air-Cooled BMC and Leaf-BMC Switch SNMP Credentials](../../security_and_authentication/Update_Default_Air-Cooled_BMC_and_Leaf_BMC_Switch_SNMP_Credentials.md).
+For more information on SNMP credentials, see [Configuring SNMP in CSM](configure_snmp.md) and [Update Default Air-Cooled BMC and Leaf-BMC Switch SNMP Credentials](../../../operations/security_and_authentication/Update_Default_Air-Cooled_BMC_and_Leaf_BMC_Switch_SNMP_Credentials.md)
 
 Once these credentials are retrieved from Vault, the `xxxxxx` fields below can be filled in.
 
@@ -148,4 +148,15 @@ show running-configuration | grep snmp
 snmp-server group cray-reds-group 3 noauth read cray-reds-view
 snmp-server user xxxxxx cray-reds-group 3 auth md5 xxxxxx priv des xxxxxx
 snmp-server view cray-reds-view 1.3.6.1.2 included
+```
+
+### Mellanox SNMP
+
+```console
+sw-spine-001 [mlag-domain: standby] # show running-config | include snmp
+   snmp-server user testuser v3 capability admin
+   snmp-server user testuser v3 enable
+   snmp-server user testuser v3 enable sets
+   snmp-server user testuser v3 encrypted auth md5 xxxxxx priv des xxxxxx
+   snmp-server user testuser v3 require-privacy
 ```

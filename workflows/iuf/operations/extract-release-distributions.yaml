@@ -1,7 +1,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2022-2023 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -35,6 +35,25 @@ spec:
   entrypoint: main
   templates:
     - name: main
+      metrics:
+        prometheus:
+          - name: operation_counter
+            help: "Count of step execution by result status"
+            labels:
+              - key: "opname"
+                value: "extract-release-distributions"
+              - key: stage
+                value: "process-media"
+              - key: type
+                value: "global"
+              - key: pname
+                value: "global"
+              - key: pversion
+                value: "global"
+              - key: status
+                value: "{{status}}"
+            counter:
+              value: "1"
       inputs:
         parameters:
           - name: auth_token
@@ -50,7 +69,7 @@ spec:
               - start-operation
             inline:
               script:
-                image: artifactory.algol60.net/csm-docker/stable/iuf:v0.0.4
+                image: artifactory.algol60.net/csm-docker/stable/iuf:csm-latest
                 command: [sh]
                 source: |
                   #!/bin/sh
@@ -59,11 +78,11 @@ spec:
                   cd $media_dir && ls *.tar.gz | jq -R -s -c 'split("\n")[:-1]'
                 volumeMounts:
                   - name: iuf
-                    mountPath: /opt/cray/iuf
+                    mountPath: /etc/cray/upgrade/csm
               volumes:
                 - name: iuf
                   hostPath:
-                    path: /opt/cray/iuf
+                    path: /etc/cray/upgrade/csm
                     type: Directory
           - name: extract-tar-files
             dependencies:
@@ -89,17 +108,17 @@ spec:
             template: prom-metrics
             arguments:
               parameters:
-              - name: opstart
-                value: "{{tasks.start-operation.outputs.result}}"
-              - name: opend
-                value: "{{tasks.end-operation.outputs.result}}"
+                - name: opstart
+                  value: "{{tasks.start-operation.outputs.result}}"
+                - name: opend
+                  value: "{{tasks.end-operation.outputs.result}}"
 
 
     - name: prom-metrics
       inputs:
         parameters:
-        - name: opstart
-        - name: opend
+          - name: opstart
+          - name: opend
       metrics:
         prometheus:
           - name: operation_time
@@ -108,6 +127,12 @@ spec:
               - key: "opname"
                 value: "extract-release-distributions"
               - key: stage
+                value: "process-media"
+              - key: type
+                value: "global"
+              - key: pdname
+                value: "global"
+              - key: pdversion
                 value: "global"
               - key: "opstart"
                 value: "{{inputs.parameters.opstart}}"
@@ -137,14 +162,34 @@ spec:
           #!/bin/sh
           set -x
           media_dir={{inputs.parameters.media_dir}}
+          tar_filename={{inputs.parameters.tarfile}}
+          echo "DEBUG Inputs for extract-tar-files are - tarfile=$tar_filename, media_dir=$media_dir"
+
           cd $media_dir
-          tar -xvzf {{inputs.parameters.tarfile}} &> /dev/stderr
-          dir_name=`tar -tzf {{inputs.parameters.tarfile}} | head -1 | cut -f1 -d"/"`
-          cat ${dir_name}/iuf-product-manifest.yaml > /tmp/manifest.yaml
+          echo "INFO Extracting product tarball $media_dir/$tar_filename"
+          result=$(gunzip -c $tar_filename | tar -t 2>&1)
+          if [ $? -ne 0 ]; then
+            echo "ERROR Provided product tarfile $tar_filename is corrupted. Please replace with the valid product tarfile and re-run this 'process-media' stage"
+            echo "$result" | sed -e 's/^/DEBUG /'
+            exit 1
+          fi
+          dir_name=`tar -tzf $tar_filename | head -1 | cut -f1 -d"/"`
+          result=$(tar -xvzf $tar_filename 2>&1)
+          if [ $? -ne 0 ]; then
+            echo "ERROR Extracting product tarfile $tar_filename failed"
+            echo "$result" | sed -e 's/^/DEBUG /'
+            exit 1
+          fi
+          MANIFEST_FILE="${dir_name}/iuf-product-manifest.yaml"
+          if [ ! -f "$MANIFEST_FILE" ]; then
+            echo "DEBUG IUF Manifest file does not exist in the tarball - $tar_filename, ignoring"
+          fi
+          echo "DEBUG Outputs for extract-tar-files are manifest.yaml and original_location=$media_dir/$dir_name"
+          cat $MANIFEST_FILE > /tmp/manifest.yaml
           echo $media_dir/$dir_name > /tmp/original_location
         volumeMounts:
           - name: iuf
-            mountPath: /opt/cray/iuf
+            mountPath: /etc/cray/upgrade/csm
       outputs:
         parameters:
           - name: manifest
@@ -156,5 +201,5 @@ spec:
       volumes:
         - name: iuf
           hostPath:
-            path: /opt/cray/iuf
+            path: /etc/cray/upgrade/csm
             type: Directory

@@ -15,9 +15,8 @@ procedure entails deactivating the LiveCD, meaning the LiveCD and all of its res
    1. [Backup](#33-backup)
 1. [Reboot](#4-reboot)
 1. [Enable NCN disk wiping safeguard](#5-enable-ncn-disk-wiping-safeguard)
-1. [Remove the default NTP pool](#6-remove-the-default-ntp-pool)
-1. [Configure DNS and NTP on each BMC](#7-configure-dns-and-ntp-on-each-bmc)
-1. [Next topic](#8-next-topic)
+1. [Configure DNS and NTP on each BMC](#6-configure-dns-and-ntp-on-each-bmc)
+1. [Next topic](#7-next-topic)
 
 ## 1. Required services
 
@@ -132,7 +131,7 @@ The steps in this section load hand-off data before a later procedure reboots th
     ```bash
     csi handoff bss-metadata \
         --data-file "${PITDATA}/configs/data.json" \
-        --kubernetes-ims-image-id "$K8S_IMS_IMAGE_ID}" \
+        --kubernetes-ims-image-id "$K8S_IMS_IMAGE_ID" \
         --storage-ims-image-id "$STORAGE_IMS_IMAGE_ID" && echo SUCCESS
     ```
 
@@ -161,12 +160,12 @@ The steps in this section load hand-off data before a later procedure reboots th
 1. (`pit#`) Tell the PIT node to PXE boot on the next boot.
 
     ```bash
-    efibootmgr -n $(efibootmgr | grep -Ei "ip(v4|4)" | awk '{print $1}' | head -n 1 | tr -d Boot*) | grep -i bootnext
+    efibootmgr -n $(efibootmgr | grep -m1 -Ei "ip(v4|4)" | awk '{match($0, /[[:xdigit:]]{4}/, m); print m[0]}') | grep -i bootnext
     ```
 
 1. (`pit#`) Collect a backdoor login. Fetch the CMN IP address for `ncn-m002` for a backdoor during the reboot of `ncn-m001`.
 
-    1. (`pit#`) Get the IP address.
+    1. Get the IP address.
 
         ```bash
         ssh ncn-m002 ip -4 a show bond0.cmn0 | grep inet | awk '{print $2}' | cut -d / -f1
@@ -239,14 +238,14 @@ It is important to backup some files from `ncn-m001` before it is rebooted.
     ssh ncn-m002 \
         "mkdir -pv /metal/bootstrap
          rsync -e 'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' -rltD -P --delete pit.nmn:'${PITDATA}'/prep /metal/bootstrap/
-         rsync -e 'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' -rltD -P --delete pit.nmn:'${CSM_PATH}'/cray-pre-install-toolkit*.iso /metal/bootstrap/"
+         rsync -e 'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' -rltD -P --delete pit.nmn:'${CSM_PATH}'/pre-install-toolkit*.iso /metal/bootstrap/"
     ```
 
 1. (`pit#`) Upload install files to S3 in the cluster.
 
     ```bash
     PITBackupDateTime=$(date +%Y-%m-%d_%H-%M-%S)
-    tar -czf "${PITDATA}/PitPrepIsoConfigsBackup-${PITBackupDateTime}.tgz" "${PITDATA}/prep" "${PITDATA}/configs" "${CSM_PATH}/cray-pre-install-toolkit"*.iso &&
+    tar -czvf "${PITDATA}/PitPrepIsoConfigsBackup-${PITBackupDateTime}.tgz" "${PITDATA}/prep" "${PITDATA}/configs" "${CSM_PATH}/pre-install-toolkit"*.iso &&
     cray artifacts create config-data \
         "PitPrepIsoConfigsBackup-${PITBackupDateTime}.tgz" \
         "${PITDATA}/PitPrepIsoConfigsBackup-${PITBackupDateTime}.tgz" &&
@@ -294,6 +293,7 @@ It is important to backup some files from `ncn-m001` before it is rebooted.
 1. (`pit#`) Wait for the node to boot, acquire its hostname (`ncn-m001`), and run `cloud-init`.
 
     > **`NOTE`** If the node has PXE boot issues, such as getting PXE errors or not pulling the `ipxe.efi` binary, see [PXE boot troubleshooting](troubleshooting_pxe_boot.md).
+    If the node comes up and indicates `Failed to start etcd` -- see [Fix `Failed to start etcd` on Master NCN](../operations/kubernetes/Fix_Failed_to_start_etcd_on_Master.md).
 
 1. (`external#`) Once `cloud-init` has completed successfully, log in and start a typescript (the IP address used here is the one noted for `ncn-m002` in an earlier step).
 
@@ -328,6 +328,8 @@ It is important to backup some files from `ncn-m001` before it is rebooted.
 
     Restore networking files from the manual backup taken during the
     [Backup](#33-backup) step.
+
+    > **`NOTE`** Do NOT change any default NCN hostname; otherwise, unexpected deployment or upgrade errors may happen.
 
     ```bash
     SYSTEM_NAME=eniac
@@ -407,13 +409,12 @@ it is used for Cray installation and bootstrap.
 1. (`ncn-m001#`) Obtain access to CSI.
 
     ```bash
-    mkdir -pv /mnt/livecd /mnt/rootfs /mnt/sqfs && \
-        mount -v /metal/bootstrap/cray-pre-install-toolkit-*.iso /mnt/livecd/ && \
+    mkdir -pv /mnt/livecd /mnt/sqfs && \
+        mount -v /metal/bootstrap/pre-install-toolkit-*.iso /mnt/livecd/ && \
         mount -v /mnt/livecd/LiveOS/squashfs.img /mnt/sqfs/ && \
-        mount -v /mnt/sqfs/LiveOS/rootfs.img /mnt/rootfs/ && \
-        cp -pv /mnt/rootfs/usr/bin/csi /tmp/csi && \
+        cp -pv /mnt/sqfs/usr/bin/csi /tmp/csi && \
         /tmp/csi version && \
-        umount -vl /mnt/sqfs /mnt/rootfs /mnt/livecd
+        umount -vl /mnt/sqfs /mnt/livecd
     ```
 
     > **`NOTE`** `/tmp/csi` will delete itself on the next reboot. The `/tmp` directory is `tmpfs` and runs in memory;
@@ -433,15 +434,7 @@ it is used for Cray installation and bootstrap.
     /tmp/csi handoff bss-update-param --set metal.no-wipe=1
     ```
 
-## 6. Remove the default NTP pool
-
-(`ncn-m001#`) Run the following command to remove the default pool, in order to prevent contention issues with NTP.
-
-```bash
-sed -i "s/^! pool pool\.ntp\.org.*//" /etc/chrony.conf
-```
-
-## 7. Configure DNS and NTP on each BMC
+## 6. Configure DNS and NTP on each BMC
 
  > **`NOTE`** Only follow this section if the NCNs are HPE hardware. If the system uses
  > Gigabyte or Intel hardware, then skip this section.
@@ -452,7 +445,7 @@ However, the commands in this section are all run **on** `ncn-m001`.
 1. (`ncn-m001#`) Validate that the system is HPE hardware.
 
     ```bash
-    ipmitool mc info | grep "Hewlett Packard Enterprise" || echo "Not HPE hardware -- SKIP these steps"
+    ipmitool mc info | grep "Hewlett Packard Enterprise" || echo "Not HPE hardware -- SKIP this section"
     ```
 
 1. (`ncn-m001#`) Set environment variables.
@@ -481,31 +474,32 @@ However, the commands in this section are all run **on** `ncn-m001`.
     Expected output looks similar to the following:
 
     ```text
-    ncn-m002-mgmt ncn-m003-mgmt ncn-s001-mgmt ncn-s002-mgmt ncn-s003-mgmt ncn-w001-mgmt ncn-w002-mgmt ncn-w003-mgmt
-    ```
-
-1. (`ncn-m001#`) Get the DNS server IP address for the NMN.
-
-    ```bash
-    NMN_DNS=$(kubectl get services -n services -o wide | grep cray-dns-unbound-udp-nmn | awk '{ print $4 }'); echo ${NMN_DNS}
-    ```
-
-    Example output:
-
-    ```text
-    10.92.100.225
+    ncn-m002-mgmt
+    ncn-m003-mgmt
+    ncn-s001-mgmt
+    ncn-s002-mgmt
+    ncn-s003-mgmt
+    ncn-w001-mgmt
+    ncn-w002-mgmt
+    ncn-w003-mgmt
     ```
 
 1. (`ncn-m001#`) Get the DNS server IP address for the HMN.
 
     ```bash
-    HMN_DNS=$(kubectl get services -n services -o wide | grep cray-dns-unbound-udp-hmn | awk '{ print $4 }'); echo ${HMN_DNS}
+    HMN_DNS=$(kubectl get services -n services -o wide | awk /cray-dns-unbound-udp-hmn/'{printf "%s%s", sep, $4; sep=","} END{print ""}'); echo ${HMN_DNS}
     ```
 
-    Example output:
+    Example output for a single DNS server:
 
     ```text
     10.94.100.225
+    ```
+
+    Example output for multiple DNS servers:
+
+    ```text
+    10.94.100.225,10.94.100.224,10.94.100.223
     ```
 
 1. (`ncn-m001#`) Run the following to loop through all of the BMCs (except `ncn-m001-mgmt`) and apply the desired settings.
@@ -516,7 +510,7 @@ However, the commands in this section are all run **on** `ncn-m001`.
         /opt/cray/csm/scripts/node_management/set-bmc-ntp-dns.sh ilo -H "${BMC}" -S -n
         echo
         echo "${BMC}: Configuring DNS on the BMC using data from unbound"
-        /opt/cray/csm/scripts/node_management/set-bmc-ntp-dns.sh ilo -H "${BMC}" -D "${NMN_DNS},${HMN_DNS}" -d
+        /opt/cray/csm/scripts/node_management/set-bmc-ntp-dns.sh ilo -H "${BMC}" -D "${HMN_DNS}" -d
         echo
         echo "${BMC}: Showing settings"
         /opt/cray/csm/scripts/node_management/set-bmc-ntp-dns.sh ilo -H "${BMC}" -s
@@ -524,6 +518,6 @@ However, the commands in this section are all run **on** `ncn-m001`.
     done ; echo "Configuration completed on all NCN BMCs"
     ```
 
-## 8. Next topic
+## 7. Next topic
 
-After completing this procedure, the next step is to [Configure Administrative Access](README.md#5-configure-administrative-access).
+Return to the previous page and continue to the next step.
